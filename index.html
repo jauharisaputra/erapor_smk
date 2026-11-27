@@ -193,18 +193,90 @@
       ]
     };
 
+    const MAPEL_UMUM = [
+      "Pendidikan Agama dan Budi Pekerti",
+      "Pendidikan Pancasila",
+      "Bahasa Indonesia",
+      "Matematika",
+      "Bahasa Inggris",
+      "IPAS",
+      "IPA",
+      "Sejarah",
+      "PENJAS"
+    ];
+
+    // Mapel kejuruan dipisahkan sesuai program keahlian / konsentrasi
+    const MAPEL_KEJURUAN_BY_PRODI = {
+      OTKP: [
+        "Dasar-Dasar Kejuruan",
+        "DPK",
+        "PRODUKTIF",
+        "KWU",
+        "CODEING",
+        "Keu. Kantor",
+        "SARPRAS",
+        "KPEGAWAI",
+        "HUMAS"
+      ],
+      AKL: [
+        "Dasar-Dasar Kejuruan",
+        "DPK",
+        "PRODUKTIF",
+        "KWU",
+        "MYOBE",
+        "AK.PEMRTH"
+      ],
+      TKJ: [
+        "Dasar-Dasar Kejuruan",
+        "DPK",
+        "PRODUKTIF",
+        "KWU",
+        "CODEING",
+        "SP. SHEET",
+        "A.I.J",
+        "A.S.J",
+        "P.P.J"
+      ]
+    };
+
+    function detectProdiCode(kelasOrJurusan = "") {
+      const text = String(kelasOrJurusan).toUpperCase();
+      if (text.includes("AKL") || text.includes("AKUNTANSI")) return "AKL";
+      if (text.includes("TKJ") || text.includes("JARINGAN") || text.includes("KOMPUTER")) return "TKJ";
+      if (text.includes("OTKP") || text.includes("MPLB") || text.includes("PERKANTORAN") || text.includes("MANAJEMEN PERKANTORAN")) return "OTKP";
+      return "ALL";
+    }
+
+    function getMapelKejuruanFor(kelasOrJurusan = "") {
+      const code = detectProdiCode(kelasOrJurusan);
+      if (code === "ALL") {
+        return Array.from(new Set([
+          ...MAPEL_KEJURUAN_BY_PRODI.OTKP,
+          ...MAPEL_KEJURUAN_BY_PRODI.AKL,
+          ...MAPEL_KEJURUAN_BY_PRODI.TKJ
+        ]));
+      }
+      return MAPEL_KEJURUAN_BY_PRODI[code] || MAPEL_KEJURUAN_BY_PRODI.OTKP;
+    }
+
+    function getMapelForContext(kelasOrJurusan = "") {
+      return [...MAPEL_UMUM, ...getMapelKejuruanFor(kelasOrJurusan)];
+    }
+
+    const SEMUA_MAPEL = getMapelForContext("ALL");
+    let selectedMapel = "Dasar-Dasar Kejuruan";
+
     // Helper normalisasi objek siswa saat impor baru
     function ensureSiswaDefaults(s) {
       if (!s.nilaiMapel) {
-        s.nilaiMapel = {
-          "Dasar-Dasar Kejuruan": { nilai: 0, tercapai: [], perluBimbingan: [], deskripsi: "" },
-          "Pendidikan Agama dan Budi Pekerti": { nilai: 85, deskripsi: "Menunjukkan penguasaan yang baik dalam materi keagamaan dan etika." },
-          "Pendidikan Pancasila": { nilai: 85, deskripsi: "Mampu menerapkan nilai-nilai Pancasila dalam kehidupan sehari-hari." },
-          "Bahasa Indonesia": { nilai: 84, deskripsi: "Mampu memahami dan menyusun teks informasi dengan baik." },
-          "Matematika": { nilai: 80, deskripsi: "Cukup baik dalam menyelesaikan pemecahan masalah matematis." },
-          "Bahasa Inggris": { nilai: 82, deskripsi: "Mampu memahami teks deskriptif dan komunikasi dasar berbahasa Inggris." }
-        };
+        s.nilaiMapel = {};
       }
+      const allowedMapel = getMapelForContext(`${s.kelas || ""} ${s.jurusan || ""}`);
+      allowedMapel.forEach(mapel => {
+        if (!s.nilaiMapel[mapel]) {
+          s.nilaiMapel[mapel] = { nilai: 0, tercapai: [], perluBimbingan: [], deskripsi: "" };
+        }
+      });
       if (!s.absensi) s.absensi = { sakit: 0, izin: 0, alpa: 0 };
       if (!s.ekskul || !s.ekskul.length) s.ekskul = [{ nama: "Pramuka", ket: "Mengikuti kegiatan dengan baik." }];
       if (!s.pkl) s.pkl = { mitra: "-", lokasi: "-", lama: "-", ket: "-" };
@@ -500,12 +572,18 @@
 
     // ==================== VIEW 2: INPUT NILAI & TP ====================
     function renderInputNilai(container) {
-      const mapelAktif = "Dasar-Dasar Kejuruan";
       const daftarKelas = getDaftarKelas();
       if (selectedKelas === 'ALL' && daftarKelas.length > 0) selectedKelas = daftarKelas[0];
       const siswaList = getFilteredSiswa();
+      const sampleSiswa = siswaList[0] || {};
+      const mapelTersedia = getMapelForContext(`${selectedKelas} ${sampleSiswa.jurusan || ""}`);
+      if (!mapelTersedia.includes(selectedMapel)) {
+        selectedMapel = mapelTersedia.includes("PRODUKTIF") ? "PRODUKTIF" : mapelTersedia[0];
+      }
+      const mapelAktif = selectedMapel;
 
       const kelasOptions = daftarKelas.map(k => `<option value="${k}" ${k === selectedKelas ? 'selected' : ''}>${k}</option>`).join('');
+      const mapelOptions = mapelTersedia.map(m => `<option value="${m}" ${m === mapelAktif ? 'selected' : ''}>${m}</option>`).join('');
 
       let rows = siswaList.map((s, idx) => {
         ensureSiswaDefaults(s);
@@ -567,8 +645,8 @@
               </div>
               <div>
                 <label class="block text-[11px] font-bold text-slate-500 uppercase">Mata Pelajaran</label>
-                <select class="px-3 py-1.5 border rounded-lg text-sm bg-white font-medium">
-                  <option>Dasar-Dasar Kejuruan</option>
+                <select onchange="selectedMapel = this.value; navigate('input-nilai')" class="px-3 py-1.5 border rounded-lg text-sm bg-white font-medium">
+                  ${mapelOptions}
                 </select>
               </div>
             </div>
@@ -602,18 +680,22 @@
 
     function updateNilaiAngka(nis, val) {
       const s = db.siswa.find(x => x.nis === nis);
-      if (s) s.nilaiMapel["Dasar-Dasar Kejuruan"].nilai = parseInt(val) || 0;
+      const mapelAktif = selectedMapel || SEMUA_MAPEL[0];
+      if (s && s.nilaiMapel[mapelAktif]) s.nilaiMapel[mapelAktif].nilai = parseInt(val) || 0;
     }
 
     function updateDeskripsiManual(nis, val) {
       const s = db.siswa.find(x => x.nis === nis);
-      if (s) s.nilaiMapel["Dasar-Dasar Kejuruan"].deskripsi = val;
+      const mapelAktif = selectedMapel || SEMUA_MAPEL[0];
+      if (s && s.nilaiMapel[mapelAktif]) s.nilaiMapel[mapelAktif].deskripsi = val;
     }
 
     function toggleTP(nis, tpId, tipe, checked) {
       const s = db.siswa.find(x => x.nis === nis);
       if (!s) return;
-      const m = s.nilaiMapel["Dasar-Dasar Kejuruan"];
+      const mapelAktif = selectedMapel || SEMUA_MAPEL[0];
+      const m = s.nilaiMapel[mapelAktif];
+      if (!m) return;
       if (tipe === 'tercapai') {
         if (checked) {
           if (!m.tercapai.includes(tpId)) m.tercapai.push(tpId);
@@ -635,12 +717,13 @@
     }
 
     async function simpanNilaiKeServer() {
+      const mapelAktif = selectedMapel || SEMUA_MAPEL[0];
       const siswaList = getFilteredSiswa();
       const items = siswaList.map(s => {
-        const m = s.nilaiMapel["Dasar-Dasar Kejuruan"];
+        const m = s.nilaiMapel[mapelAktif] || { nilai: 0, tercapai: [], perluBimbingan: [], deskripsi: "" };
         return {
           nis: s.nis,
-          mapel: "Dasar-Dasar Kejuruan",
+          mapel: mapelAktif,
           nilai_akhir: m.nilai,
           tp_tercapai: m.tercapai,
           tp_bimbingan: m.perluBimbingan,
@@ -855,8 +938,8 @@
       const s = db.siswa.find(x => x.nis === nis) || db.siswa[0];
       ensureSiswaDefaults(s);
 
-      const umumList = ["Pendidikan Agama dan Budi Pekerti", "Pendidikan Pancasila", "Bahasa Indonesia", "Matematika", "Bahasa Inggris"];
-      const kejuruanList = ["Dasar-Dasar Kejuruan"];
+      const umumList = MAPEL_UMUM;
+      const kejuruanList = getMapelKejuruanFor(`${s.kelas || ""} ${s.jurusan || ""}`);
 
       const fase = s.kelas.startsWith("X ") ? "E" : "F";
 
