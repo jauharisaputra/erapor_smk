@@ -1,489 +1,458 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>e-Rapor SMK | Kurikulum Merdeka</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- SheetJS (xlsx) untuk Impor File Excel Model 8335 -->
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-
-        /* Pengaturan Khusus Cetak Rapor (A4) */
-        @media print {
-            body * {
-                visibility: hidden;
-            }
-
-            #print-area,
-            #print-area * {
-                visibility: visible;
-            }
-
-            #print-area {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                padding: 0;
-                margin: 0;
-                background: white;
-                color: black;
-                font-family: 'Times New Roman', Times, serif;
-                font-size: 11pt;
-            }
-
-            .no-print {
-                display: none !important;
-            }
-
-            @page {
-                size: A4 portrait;
-                margin: 1.5cm;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>e-Rapor SMK | Kurikulum Merdeka</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- SheetJS (xlsx) untuk Impor File Excel Model 8335 -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    
+    /* Pengaturan Khusus Cetak Rapor (A4) */
+    @media print {
+      body * { visibility: hidden; }
+      #print-area, #print-area * { visibility: visible; }
+      #print-area {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 0;
+        margin: 0;
+        background: white;
+        color: black;
+        font-family: 'Times New Roman', Times, serif;
+        font-size: 11pt;
+      }
+      .no-print { display: none !important; }
+      @page { size: A4 portrait; margin: 1.5cm; }
+    }
+  </style>
 </head>
-
 <body class="bg-slate-100 text-slate-800 antialiased">
 
-    <!-- ==================== HALAMAN LOGIN ==================== -->
-    <div id="login-screen"
-        class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-blue-800 to-sky-700 p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-            <div class="bg-blue-950 p-6 text-center text-white border-b-4 border-amber-400">
-                <div class="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <i data-lucide="graduation-cap" class="w-9 h-9 text-amber-400"></i>
-                </div>
-                <h1 class="text-xl font-bold tracking-wide">e-RAPOR SMK</h1>
-                <p class="text-xs text-blue-200 mt-1">SMK Filadelfia Pemangkat<br>Kurikulum Merdeka</p>
-            </div>
-
-            <form id="login-form" class="p-6 space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Pilih Peran (Mode Simulasi
-                        / Backend)</label>
-                    <select id="login-role"
-                        class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-600 focus:outline-none">
-                        <option value="admin">Admin / Waka Kurikulum (Impor Siswa & Master)</option>
-                        <option value="guru">Guru Mata Pelajaran</option>
-                        <option value="walas">Wali Kelas</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Username / NIP</label>
-                    <input type="text" id="login-user" value="199007012023011001" required
-                        class="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-600 focus:outline-none">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Kata Sandi</label>
-                    <input type="password" id="login-pass" value="smkbisa123" required
-                        class="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-600 focus:outline-none">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Tahun Pelajaran &
-                        Semester</label>
-                    <select id="login-semester"
-                        class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm">
-                        <option value="2026/2027 Ganjil">2026/2027 - Semester Ganjil</option>
-                        <option value="2026/2027 Genap">2026/2027 - Semester Genap</option>
-                    </select>
-                </div>
-
-                <button type="submit" id="btn-login"
-                    class="w-full bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2.5 rounded-lg shadow transition flex items-center justify-center gap-2">
-                    <i data-lucide="log-in" class="w-4 h-4"></i> Masuk Aplikasi
-                </button>
-            </form>
-            <div id="login-footer-status" class="bg-slate-50 px-6 py-3 text-center border-t text-xs text-slate-500">
-                Siap terhubung ke Google Sheets API
-            </div>
+  <!-- ==================== HALAMAN LOGIN ==================== -->
+  <div id="login-screen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-blue-800 to-sky-700 p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+      <div class="bg-blue-950 p-6 text-center text-white border-b-4 border-amber-400">
+        <div class="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-3">
+          <i data-lucide="graduation-cap" class="w-9 h-9 text-amber-400"></i>
         </div>
-    </div>
-
-    <!-- ==================== APLIKASI UTAMA (DASHBOARD) ==================== -->
-    <div id="app-screen" class="hidden min-h-screen flex flex-col md:flex-row">
-
-        <!-- Sidebar -->
-        <aside class="w-full md:w-64 bg-blue-950 text-white flex flex-col shrink-0 no-print">
-            <div class="p-4 border-b border-blue-900 flex items-center gap-3">
-                <div class="bg-amber-400 text-blue-950 p-2 rounded-lg font-bold">
-                    <i data-lucide="book-open-check" class="w-6 h-6"></i>
-                </div>
-                <div>
-                    <h2 class="font-bold text-base leading-tight">e-Rapor SMK</h2>
-                    <span id="badge-semester" class="text-[11px] text-amber-300 font-medium">2026/2027 Ganjil</span>
-                </div>
-            </div>
-
-            <!-- Info User -->
-            <div class="p-4 bg-blue-900/50 border-b border-blue-900">
-                <p id="user-name" class="text-sm font-semibold truncate">Jauhari Saputra, S.Kom.</p>
-                <p id="user-role-label" class="text-xs text-blue-300 mt-0.5">Admin / Kurikulum</p>
-            </div>
-
-            <!-- Navigasi Menu -->
-            <nav id="sidebar-menu" class="flex-1 p-3 space-y-1 text-sm"></nav>
-
-            <div class="p-3 border-t border-blue-900">
-                <button onclick="logout()"
-                    class="w-full flex items-center gap-2 px-3 py-2 text-red-300 hover:bg-red-950/60 hover:text-red-200 rounded-lg text-sm transition">
-                    <i data-lucide="log-out" class="w-4 h-4"></i> Keluar
-                </button>
-            </div>
-        </aside>
-
-        <!-- Konten Utama -->
-        <main class="flex-1 flex flex-col min-w-0">
-            <header class="bg-white shadow-sm px-6 py-3.5 flex items-center justify-between no-print">
-                <h1 id="page-title" class="text-lg font-bold text-slate-800">Dashboard</h1>
-                <div class="flex items-center gap-3">
-                    <span id="sync-status"
-                        class="text-xs px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium flex items-center gap-1.5">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Mode Lokal
-                    </span>
-                </div>
-            </header>
-
-            <div id="main-content" class="p-6 flex-1 overflow-y-auto"></div>
-        </main>
-    </div>
-
-    <!-- ==================== MODAL KELOLA TUJUAN PEMBELAJARAN ==================== -->
-    <div id="modal-tp" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 no-print">
-        <div class="bg-white rounded-xl max-w-lg w-full p-6 shadow-xl">
-            <div class="flex justify-between items-center border-b pb-3 mb-4">
-                <h3 class="font-bold text-base">Daftar Tujuan Pembelajaran (TP)</h3>
-                <button onclick="closeModalTP()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x"
-                        class="w-5 h-5"></i></button>
-            </div>
-            <div id="tp-list-container" class="space-y-2 max-h-60 overflow-y-auto mb-4"></div>
-            <div class="flex gap-2">
-                <input type="text" id="new-tp-input" placeholder="Tulis deskripsi TP baru (diawali kata kerja)..."
-                    class="flex-1 px-3 py-2 border rounded-lg text-sm">
-                <button onclick="addTP()"
-                    class="bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-800">Tambah</button>
-            </div>
+        <h1 class="text-xl font-bold tracking-wide">e-RAPOR SMK</h1>
+        <p class="text-xs text-blue-200 mt-1">SMK Filadelfia Pemangkat<br>Kurikulum Merdeka</p>
+      </div>
+      
+      <form id="login-form" class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Pilih Peran (Mode Simulasi / Backend)</label>
+          <select id="login-role" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-600 focus:outline-none">
+            <option value="admin">Admin / Waka Kurikulum (Impor Siswa & Master)</option>
+            <option value="guru">Guru Mata Pelajaran</option>
+            <option value="walas">Wali Kelas</option>
+          </select>
         </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Username / NIP</label>
+          <input type="text" id="login-user" value="199007012023011001" required class="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-600 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Kata Sandi</label>
+          <input type="password" id="login-pass" value="smkbisa123" required class="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-600 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Tahun Pelajaran & Semester</label>
+          <select id="login-semester" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm">
+            <option value="2026/2027 Ganjil">2026/2027 - Semester Ganjil</option>
+            <option value="2026/2027 Genap">2026/2027 - Semester Genap</option>
+          </select>
+        </div>
+
+        <button type="submit" id="btn-login" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2.5 rounded-lg shadow transition flex items-center justify-center gap-2">
+          <i data-lucide="log-in" class="w-4 h-4"></i> Masuk Aplikasi
+        </button>
+      </form>
+      <div id="login-footer-status" class="bg-slate-50 px-6 py-3 text-center border-t text-xs text-slate-500">
+        Siap terhubung ke Google Sheets API
+      </div>
     </div>
+  </div>
 
-    <!-- ==================== JAVASCRIPT LOGIC ==================== -->
-    <script>
-        // URL Web App Google Apps Script (bisa diatur langsung di kode atau melalui menu Data Master)
-        let GAS_WEB_APP_URL = localStorage.getItem('erapor_gas_url') || "";
+  <!-- ==================== APLIKASI UTAMA (DASHBOARD) ==================== -->
+  <div id="app-screen" class="hidden min-h-screen flex flex-col md:flex-row">
+    
+    <!-- Sidebar -->
+    <aside class="w-full md:w-64 bg-blue-950 text-white flex flex-col shrink-0 no-print">
+      <div class="p-4 border-b border-blue-900 flex items-center gap-3">
+        <div class="bg-amber-400 text-blue-950 p-2 rounded-lg font-bold">
+          <i data-lucide="book-open-check" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h2 class="font-bold text-base leading-tight">e-Rapor SMK</h2>
+          <span id="badge-semester" class="text-[11px] text-amber-300 font-medium">2026/2027 Ganjil</span>
+        </div>
+      </div>
 
-        let currentUser = null;
-        let currentTab = 'dashboard';
-        let selectedKelas = 'ALL';
+      <!-- Info User -->
+      <div class="p-4 bg-blue-900/50 border-b border-blue-900">
+        <p id="user-name" class="text-sm font-semibold truncate">Jauhari Saputra, S.Kom.</p>
+        <p id="user-role-label" class="text-xs text-blue-300 mt-0.5">Admin / Kurikulum</p>
+      </div>
 
-        const db = {
-            sekolah: {
-                nama: "SMK FILADELFIA PEMANGKAT",
-                npsn: "30106212",
-                alamat: "Jl. Mohd. Sohor Desa Sebatuan Pemangkat, Kab. Sambas",
-                kepsek: "Kepala Sekolah SMK Filadelfia",
-                nipKepsek: "-",
-                walas: "Jauhari Saputra, S.Kom.",
-                nipWalas: "199007012023011001",
-                tanggalRapor: "19 Desember 2026"
-            },
-            tpList: [
-                {id: "TP1", mapel: "Dasar-Dasar Kejuruan", teks: "memahami proses bisnis di bidang keahlian secara menyeluruh"},
-                {id: "TP2", mapel: "Dasar-Dasar Kejuruan", teks: "menerapkan prosedur kerja standar dan keselamatan kerja (K3LH)"},
-                {id: "TP3", mapel: "Dasar-Dasar Kejuruan", teks: "mengoperasikan perangkat lunak dan peralatan praktik sesuai standar industri"}
-            ],
-            siswa: [
-                {
-                    nis: "1267", nisn: "0097511564", nama: "APRIYANTO", kelas: "XII TKJ", jurusan: "Teknik Komputer dan Jaringan",
-                    nilaiMapel: {
-                        "Dasar-Dasar Kejuruan": {nilai: 88, tercapai: ["TP2", "TP3"], perluBimbingan: ["TP1"], deskripsi: ""},
-                        "Pendidikan Agama dan Budi Pekerti": {nilai: 90, deskripsi: "Menunjukkan penguasaan yang sangat baik dalam memahami nilai-nilai akhlak mulia."},
-                        "Pendidikan Pancasila": {nilai: 85, deskripsi: "Mampu menerapkan nilai-nilai Pancasila dalam kehidupan sekolah."},
-                        "Bahasa Indonesia": {nilai: 84, deskripsi: "Terampil menyusun teks laporan hasil observasi secara logis."},
-                        "Matematika": {nilai: 82, deskripsi: "Baik dalam menyelesaikan persoalan aljabar dan statistika."},
-                        "Bahasa Inggris": {nilai: 86, deskripsi: "Mampu berkomunikasi lisan dan tulis menggunakan ungkapan transaksional."}
-                    },
-                    absensi: {sakit: 1, izin: 0, alpa: 0},
-                    ekskul: [{nama: "Pramuka", ket: "Aktif dalam kegiatan kepramukaan."}],
-                    pkl: {mitra: "PT Telkom Akses", lokasi: "Pemangkat", lama: "6 Bulan", ket: "Melaksanakan praktik dengan sangat disiplin."},
-                    catatanWalas: "Pertahankan prestasi belajarmu dan terus tingkatkan kedisiplinan."
-                }
-            ]
+      <!-- Navigasi Menu -->
+      <nav id="sidebar-menu" class="flex-1 p-3 space-y-1 text-sm"></nav>
+
+      <div class="p-3 border-t border-blue-900">
+        <button onclick="logout()" class="w-full flex items-center gap-2 px-3 py-2 text-red-300 hover:bg-red-950/60 hover:text-red-200 rounded-lg text-sm transition">
+          <i data-lucide="log-out" class="w-4 h-4"></i> Keluar
+        </button>
+      </div>
+    </aside>
+
+    <!-- Konten Utama -->
+    <main class="flex-1 flex flex-col min-w-0">
+      <header class="bg-white shadow-sm px-6 py-3.5 flex items-center justify-between no-print">
+        <h1 id="page-title" class="text-lg font-bold text-slate-800">Dashboard</h1>
+        <div class="flex items-center gap-3">
+          <span id="sync-status" class="text-xs px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Mode Lokal
+          </span>
+        </div>
+      </header>
+
+      <div id="main-content" class="p-6 flex-1 overflow-y-auto"></div>
+    </main>
+  </div>
+
+  <!-- ==================== MODAL KELOLA TUJUAN PEMBELAJARAN ==================== -->
+  <div id="modal-tp" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 no-print">
+    <div class="bg-white rounded-xl max-w-lg w-full p-6 shadow-xl">
+      <div class="flex justify-between items-center border-b pb-3 mb-4">
+        <h3 class="font-bold text-base">Daftar Tujuan Pembelajaran (TP)</h3>
+        <button onclick="closeModalTP()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div id="tp-list-container" class="space-y-2 max-h-60 overflow-y-auto mb-4"></div>
+      <div class="flex gap-2">
+        <input type="text" id="new-tp-input" placeholder="Tulis deskripsi TP baru (diawali kata kerja)..." class="flex-1 px-3 py-2 border rounded-lg text-sm">
+        <button onclick="addTP()" class="bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-800">Tambah</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+  <script>
+    // URL Web App Google Apps Script (bisa diatur langsung di kode atau melalui menu Data Master)
+    let GAS_WEB_APP_URL = localStorage.getItem('erapor_gas_url') || "https://script.google.com/macros/s/AKfycbx2hU0lg7XuMirqYzOqlhLp5StHiAzVgNpxDfY3Bt2H1EwDRdOrbNdihaDJCtx0tK9A5w/exec";
+
+    let currentUser = null;
+    let currentTab = 'dashboard';
+    let selectedKelas = 'ALL';
+
+    const db = {
+      sekolah: {
+        nama: "SMK FILADELFIA PEMANGKAT",
+        npsn: "30106212",
+        alamat: "Jl. Mohd. Sohor Desa Sebatuan Pemangkat, Kab. Sambas",
+        kepsek: "Kepala Sekolah SMK Filadelfia",
+        nipKepsek: "-",
+        walas: "Jauhari Saputra, S.Kom.",
+        nipWalas: "199007012023011001",
+        tanggalRapor: "19 Desember 2026"
+      },
+      tpList: [
+        { id: "TP1", mapel: "Dasar-Dasar Kejuruan", teks: "memahami proses bisnis di bidang keahlian secara menyeluruh" },
+        { id: "TP2", mapel: "Dasar-Dasar Kejuruan", teks: "menerapkan prosedur kerja standar dan keselamatan kerja (K3LH)" },
+        { id: "TP3", mapel: "Dasar-Dasar Kejuruan", teks: "mengoperasikan perangkat lunak dan peralatan praktik sesuai standar industri" }
+      ],
+      siswa: [
+        { 
+          nis: "1267", nisn: "0097511564", nama: "APRIYANTO", kelas: "XII TKJ", jurusan: "Teknik Komputer dan Jaringan",
+          nilaiMapel: {
+            "Dasar-Dasar Kejuruan": { nilai: 88, tercapai: ["TP2", "TP3"], perluBimbingan: ["TP1"], deskripsi: "" },
+            "Pendidikan Agama dan Budi Pekerti": { nilai: 90, deskripsi: "Menunjukkan penguasaan yang sangat baik dalam memahami nilai-nilai akhlak mulia." },
+            "Pendidikan Pancasila": { nilai: 85, deskripsi: "Mampu menerapkan nilai-nilai Pancasila dalam kehidupan sekolah." },
+            "Bahasa Indonesia": { nilai: 84, deskripsi: "Terampil menyusun teks laporan hasil observasi secara logis." },
+            "Matematika": { nilai: 82, deskripsi: "Baik dalam menyelesaikan persoalan aljabar dan statistika." },
+            "Bahasa Inggris": { nilai: 86, deskripsi: "Mampu berkomunikasi lisan dan tulis menggunakan ungkapan transaksional." }
+          },
+          absensi: { sakit: 1, izin: 0, alpa: 0 },
+          ekskul: [{ nama: "Pramuka", ket: "Aktif dalam kegiatan kepramukaan." }],
+          pkl: { mitra: "PT Telkom Akses", lokasi: "Pemangkat", lama: "6 Bulan", ket: "Melaksanakan praktik dengan sangat disiplin." },
+          catatanWalas: "Pertahankan prestasi belajarmu dan terus tingkatkan kedisiplinan."
+        }
+      ]
+    };
+
+    // Helper normalisasi objek siswa saat impor baru
+    function ensureSiswaDefaults(s) {
+      if (!s.nilaiMapel) {
+        s.nilaiMapel = {
+          "Dasar-Dasar Kejuruan": { nilai: 0, tercapai: [], perluBimbingan: [], deskripsi: "" },
+          "Pendidikan Agama dan Budi Pekerti": { nilai: 85, deskripsi: "Menunjukkan penguasaan yang baik dalam materi keagamaan dan etika." },
+          "Pendidikan Pancasila": { nilai: 85, deskripsi: "Mampu menerapkan nilai-nilai Pancasila dalam kehidupan sehari-hari." },
+          "Bahasa Indonesia": { nilai: 84, deskripsi: "Mampu memahami dan menyusun teks informasi dengan baik." },
+          "Matematika": { nilai: 80, deskripsi: "Cukup baik dalam menyelesaikan pemecahan masalah matematis." },
+          "Bahasa Inggris": { nilai: 82, deskripsi: "Mampu memahami teks deskriptif dan komunikasi dasar berbahasa Inggris." }
         };
+      }
+      if (!s.absensi) s.absensi = { sakit: 0, izin: 0, alpa: 0 };
+      if (!s.ekskul || !s.ekskul.length) s.ekskul = [{ nama: "Pramuka", ket: "Mengikuti kegiatan dengan baik." }];
+      if (!s.pkl) s.pkl = { mitra: "-", lokasi: "-", lama: "-", ket: "-" };
+      if (s.catatanWalas === undefined) s.catatanWalas = "Tetap semangat belajar dan jaga kedisiplinan.";
+      return s;
+    }
 
-        // Helper normalisasi objek siswa saat impor baru
-        function ensureSiswaDefaults(s) {
-            if (!s.nilaiMapel) {
-                s.nilaiMapel = {
-                    "Dasar-Dasar Kejuruan": {nilai: 0, tercapai: [], perluBimbingan: [], deskripsi: ""},
-                    "Pendidikan Agama dan Budi Pekerti": {nilai: 85, deskripsi: "Menunjukkan penguasaan yang baik dalam materi keagamaan dan etika."},
-                    "Pendidikan Pancasila": {nilai: 85, deskripsi: "Mampu menerapkan nilai-nilai Pancasila dalam kehidupan sehari-hari."},
-                    "Bahasa Indonesia": {nilai: 84, deskripsi: "Mampu memahami dan menyusun teks informasi dengan baik."},
-                    "Matematika": {nilai: 80, deskripsi: "Cukup baik dalam menyelesaikan pemecahan masalah matematis."},
-                    "Bahasa Inggris": {nilai: 82, deskripsi: "Mampu memahami teks deskriptif dan komunikasi dasar berbahasa Inggris."}
+    function generateDeskripsi(tercapaiIds, bimbinganIds) {
+      let teksTercapai = "";
+      let teksBimbingan = "";
+      if (tercapaiIds && tercapaiIds.length > 0) {
+        const list = tercapaiIds.map(id => db.tpList.find(t => t.id === id)?.teks).filter(Boolean);
+        if (list.length) teksTercapai = `Menunjukkan penguasaan yang baik dalam ${list.join(", ")}.`;
+      }
+      if (bimbinganIds && bimbinganIds.length > 0) {
+        const list = bimbinganIds.map(id => db.tpList.find(t => t.id === id)?.teks).filter(Boolean);
+        if (list.length) teksBimbingan = ` Perlu pendampingan lebih lanjut dalam ${list.join(", ")}.`;
+      }
+      return (teksTercapai + teksBimbingan).trim() || "Capaian kompetensi sesuai kriteria ketuntasan.";
+    }
+
+    db.siswa.forEach(s => {
+      ensureSiswaDefaults(s);
+      const m = s.nilaiMapel["Dasar-Dasar Kejuruan"];
+      if (m && !m.deskripsi) m.deskripsi = generateDeskripsi(m.tercapai, m.perluBimbingan);
+    });
+
+    function setSyncBadge(state, text) {
+      const el = document.getElementById('sync-status');
+      if (!el) return;
+      if (state === 'loading') {
+        el.className = "text-xs px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 font-medium flex items-center gap-1.5";
+        el.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span> ${text}`;
+      } else if (state === 'online') {
+        el.className = "text-xs px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium flex items-center gap-1.5";
+        el.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> ${text}`;
+      } else {
+        el.className = "text-xs px-2.5 py-1 rounded-full bg-slate-200 text-slate-700 font-medium flex items-center gap-1.5";
+        el.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-500"></span> ${text}`;
+      }
+    }
+
+    // ==================== API HELPER (GOOGLE APPS SCRIPT) ====================
+    async function callGasPost(payload) {
+      if (!GAS_WEB_APP_URL) return null;
+      const res = await fetch(GAS_WEB_APP_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+      });
+      return await res.json();
+    }
+
+    async function syncFromGoogleSheets() {
+      if (!GAS_WEB_APP_URL) {
+        setSyncBadge('local', 'Mode Lokal (Belum Terhubung GAS)');
+        return;
+      }
+      try {
+        setSyncBadge('loading', 'Memuat dari Google Sheets...');
+        const res = await fetch(`${GAS_WEB_APP_URL}?action=getAll`);
+        const json = await res.json();
+        if (json.status === 'ok' && json.data) {
+          if (json.data.tpList && json.data.tpList.length > 0) {
+            db.tpList = json.data.tpList.map(t => ({
+              id: String(t.id_tp),
+              mapel: String(t.mapel || "Dasar-Dasar Kejuruan"),
+              teks: String(t.deskripsi_tp)
+            }));
+          }
+          if (json.data.siswa && json.data.siswa.length > 0) {
+            const nilaiRows = json.data.nilai || [];
+            const walasRows = json.data.walas || [];
+            db.siswa = json.data.siswa.map(row => {
+              const nisStr = String(row.nis).trim();
+              const s = ensureSiswaDefaults({
+                nis: nisStr,
+                nisn: String(row.nisn || "").trim(),
+                nama: String(row.nama || "").trim(),
+                kelas: String(row.kelas || "").trim(),
+                jurusan: String(row.jurusan || "").trim()
+              });
+              nilaiRows.filter(n => String(n.nis).trim() === nisStr).forEach(n => {
+                s.nilaiMapel[n.mapel] = {
+                  nilai: Number(n.nilai_akhir) || 0,
+                  tercapai: n.tp_tercapai ? String(n.tp_tercapai).split(",").map(x => x.trim()).filter(Boolean) : [],
+                  perluBimbingan: n.tp_bimbingan ? String(n.tp_bimbingan).split(",").map(x => x.trim()).filter(Boolean) : [],
+                  deskripsi: String(n.deskripsi || "")
                 };
-            }
-            if (!s.absensi) s.absensi = {sakit: 0, izin: 0, alpa: 0};
-            if (!s.ekskul || !s.ekskul.length) s.ekskul = [{nama: "Pramuka", ket: "Mengikuti kegiatan dengan baik."}];
-            if (!s.pkl) s.pkl = {mitra: "-", lokasi: "-", lama: "-", ket: "-"};
-            if (s.catatanWalas === undefined) s.catatanWalas = "Tetap semangat belajar dan jaga kedisiplinan.";
-            return s;
-        }
-
-        function generateDeskripsi(tercapaiIds, bimbinganIds) {
-            let teksTercapai = "";
-            let teksBimbingan = "";
-            if (tercapaiIds && tercapaiIds.length > 0) {
-                const list = tercapaiIds.map(id => db.tpList.find(t => t.id === id)?.teks).filter(Boolean);
-                if (list.length) teksTercapai = `Menunjukkan penguasaan yang baik dalam ${list.join(", ")}.`;
-            }
-            if (bimbinganIds && bimbinganIds.length > 0) {
-                const list = bimbinganIds.map(id => db.tpList.find(t => t.id === id)?.teks).filter(Boolean);
-                if (list.length) teksBimbingan = ` Perlu pendampingan lebih lanjut dalam ${list.join(", ")}.`;
-            }
-            return (teksTercapai + teksBimbingan).trim() || "Capaian kompetensi sesuai kriteria ketuntasan.";
-        }
-
-        db.siswa.forEach(s => {
-            ensureSiswaDefaults(s);
-            const m = s.nilaiMapel["Dasar-Dasar Kejuruan"];
-            if (m && !m.deskripsi) m.deskripsi = generateDeskripsi(m.tercapai, m.perluBimbingan);
-        });
-
-        function setSyncBadge(state, text) {
-            const el = document.getElementById('sync-status');
-            if (!el) return;
-            if (state === 'loading') {
-                el.className = "text-xs px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 font-medium flex items-center gap-1.5";
-                el.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span> ${text}`;
-            } else if (state === 'online') {
-                el.className = "text-xs px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium flex items-center gap-1.5";
-                el.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> ${text}`;
-            } else {
-                el.className = "text-xs px-2.5 py-1 rounded-full bg-slate-200 text-slate-700 font-medium flex items-center gap-1.5";
-                el.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-500"></span> ${text}`;
-            }
-        }
-
-        // ==================== API HELPER (GOOGLE APPS SCRIPT) ====================
-        async function callGasPost(payload) {
-            if (!GAS_WEB_APP_URL) return null;
-            const res = await fetch(GAS_WEB_APP_URL, {
-                method: "POST",
-                headers: {"Content-Type": "text/plain;charset=utf-8"},
-                body: JSON.stringify(payload)
+              });
+              const w = walasRows.find(x => String(x.nis).trim() === nisStr);
+              if (w) {
+                s.absensi = { sakit: Number(w.sakit) || 0, izin: Number(w.izin) || 0, alpa: Number(w.alpa) || 0 };
+                s.ekskul = [{ nama: w.ekskul_nama || "-", ket: w.ekskul_ket || "-" }];
+                s.pkl = { mitra: w.pkl_mitra || "-", lokasi: w.pkl_lokasi || "-", lama: w.pkl_lama || "-", ket: w.pkl_ket || "-" };
+                s.catatanWalas = w.catatan || "";
+              }
+              return s;
             });
-            return await res.json();
+          }
+          setSyncBadge('online', `Terhubung Sheets (${db.siswa.length} Siswa)`);
+        } else {
+          setSyncBadge('local', 'Gagal Muat Sheets');
         }
+      } catch (err) {
+        console.error(err);
+        setSyncBadge('local', 'Offline / CORS Error');
+      }
+    }
 
-        async function syncFromGoogleSheets() {
-            if (!GAS_WEB_APP_URL) {
-                setSyncBadge('local', 'Mode Lokal (Belum Terhubung GAS)');
-                return;
-            }
-            try {
-                setSyncBadge('loading', 'Memuat dari Google Sheets...');
-                const res = await fetch(`${GAS_WEB_APP_URL}?action=getAll`);
-                const json = await res.json();
-                if (json.status === 'ok' && json.data) {
-                    if (json.data.tpList && json.data.tpList.length > 0) {
-                        db.tpList = json.data.tpList.map(t => ({
-                            id: String(t.id_tp),
-                            mapel: String(t.mapel || "Dasar-Dasar Kejuruan"),
-                            teks: String(t.deskripsi_tp)
-                        }));
-                    }
-                    if (json.data.siswa && json.data.siswa.length > 0) {
-                        const nilaiRows = json.data.nilai || [];
-                        const walasRows = json.data.walas || [];
-                        db.siswa = json.data.siswa.map(row => {
-                            const nisStr = String(row.nis).trim();
-                            const s = ensureSiswaDefaults({
-                                nis: nisStr,
-                                nisn: String(row.nisn || "").trim(),
-                                nama: String(row.nama || "").trim(),
-                                kelas: String(row.kelas || "").trim(),
-                                jurusan: String(row.jurusan || "").trim()
-                            });
-                            nilaiRows.filter(n => String(n.nis).trim() === nisStr).forEach(n => {
-                                s.nilaiMapel[n.mapel] = {
-                                    nilai: Number(n.nilai_akhir) || 0,
-                                    tercapai: n.tp_tercapai ? String(n.tp_tercapai).split(",").map(x => x.trim()).filter(Boolean) : [],
-                                    perluBimbingan: n.tp_bimbingan ? String(n.tp_bimbingan).split(",").map(x => x.trim()).filter(Boolean) : [],
-                                    deskripsi: String(n.deskripsi || "")
-                                };
-                            });
-                            const w = walasRows.find(x => String(x.nis).trim() === nisStr);
-                            if (w) {
-                                s.absensi = {sakit: Number(w.sakit) || 0, izin: Number(w.izin) || 0, alpa: Number(w.alpa) || 0};
-                                s.ekskul = [{nama: w.ekskul_nama || "-", ket: w.ekskul_ket || "-"}];
-                                s.pkl = {mitra: w.pkl_mitra || "-", lokasi: w.pkl_lokasi || "-", lama: w.pkl_lama || "-", ket: w.pkl_ket || "-"};
-                                s.catatanWalas = w.catatan || "";
-                            }
-                            return s;
-                        });
-                    }
-                    setSyncBadge('online', `Terhubung Sheets (${db.siswa.length} Siswa)`);
-                } else {
-                    setSyncBadge('local', 'Gagal Muat Sheets');
-                }
-            } catch (err) {
-                console.error(err);
-                setSyncBadge('local', 'Offline / CORS Error');
-            }
-        }
+    // ==================== AUTH & NAVIGASI ====================
+    document.getElementById('login-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const role = document.getElementById('login-role').value;
+      const semester = document.getElementById('login-semester').value;
+      const username = document.getElementById('login-user').value.trim();
+      const password = document.getElementById('login-pass').value;
+      const btn = document.getElementById('btn-login');
 
-        // ==================== AUTH & NAVIGASI ====================
-        document.getElementById('login-form').addEventListener('submit', async function (e) {
-            e.preventDefault();
-            const role = document.getElementById('login-role').value;
-            const semester = document.getElementById('login-semester').value;
-            const username = document.getElementById('login-user').value.trim();
-            const password = document.getElementById('login-pass').value;
-            const btn = document.getElementById('btn-login');
+      const roleNames = {
+        guru: "Guru Mata Pelajaran",
+        walas: "Wali Kelas",
+        admin: "Admin / Waka Kurikulum"
+      };
 
-            const roleNames = {
-                guru: "Guru Mata Pelajaran",
-                walas: "Wali Kelas",
-                admin: "Admin / Waka Kurikulum"
+      if (GAS_WEB_APP_URL) {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="animate-spin">⏳</span> Memverifikasi...`;
+        try {
+          const authRes = await callGasPost({ action: "login", username, password });
+          if (authRes && authRes.status === "ok") {
+            currentUser = {
+              nama: authRes.user.nama,
+              role: authRes.user.role || role,
+              roleLabel: roleNames[authRes.user.role || role],
+              semester: semester
             };
-
-            if (GAS_WEB_APP_URL) {
-                btn.disabled = true;
-                btn.innerHTML = `<span class="animate-spin">⏳</span> Memverifikasi...`;
-                try {
-                    const authRes = await callGasPost({action: "login", username, password});
-                    if (authRes && authRes.status === "ok") {
-                        currentUser = {
-                            nama: authRes.user.nama,
-                            role: authRes.user.role || role,
-                            roleLabel: roleNames[authRes.user.role || role],
-                            semester: semester
-                        };
-                    } else {
-                        alert(authRes?.message || "Login gagal.");
-                        btn.disabled = false;
-                        btn.innerHTML = `<i data-lucide="log-in" class="w-4 h-4"></i> Masuk Aplikasi`;
-                        lucide.createIcons();
-                        return;
-                    }
-                } catch (err) {
-                    alert("Tidak dapat menghubungi server Apps Script. Masuk menggunakan mode lokal.");
-                }
-                btn.disabled = false;
-                btn.innerHTML = `<i data-lucide="log-in" class="w-4 h-4"></i> Masuk Aplikasi`;
-            }
-
-            if (!currentUser) {
-                currentUser = {
-                    nama: "Jauhari Saputra, S.Kom.",
-                    role: role,
-                    roleLabel: roleNames[role],
-                    semester: semester
-                };
-            }
-
-            document.getElementById('user-name').textContent = currentUser.nama;
-            document.getElementById('user-role-label').textContent = currentUser.roleLabel;
-            document.getElementById('badge-semester').textContent = currentUser.semester;
-
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('app-screen').classList.remove('hidden');
-
-            renderSidebar();
-            await syncFromGoogleSheets();
-            navigate('dashboard');
-        });
-
-        function logout() {
-            currentUser = null;
-            document.getElementById('app-screen').classList.add('hidden');
-            document.getElementById('login-screen').classList.remove('hidden');
+          } else {
+            alert(authRes?.message || "Login gagal.");
+            btn.disabled = false;
+            btn.innerHTML = `<i data-lucide="log-in" class="w-4 h-4"></i> Masuk Aplikasi`;
+            lucide.createIcons();
+            return;
+          }
+        } catch (err) {
+          alert("Tidak dapat menghubungi server Apps Script. Masuk menggunakan mode lokal.");
         }
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="log-in" class="w-4 h-4"></i> Masuk Aplikasi`;
+      }
 
-        function renderSidebar() {
-            const menus = [
-                {id: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard', roles: ['guru', 'walas', 'admin']},
-                {id: 'input-nilai', label: 'Nilai Akademik & TP', icon: 'edit-3', roles: ['guru', 'admin']},
-                {id: 'walas-input', label: 'Absensi, Ekskul & PKL', icon: 'clipboard-check', roles: ['walas', 'admin']},
-                {id: 'cetak-rapor', label: 'Cetak Rapor & Leger', icon: 'printer', roles: ['walas', 'admin']},
-                {id: 'data-master', label: 'Impor Model 8335 & Server', icon: 'upload-cloud', roles: ['admin']}
-            ];
+      if (!currentUser) {
+        currentUser = {
+          nama: "Jauhari Saputra, S.Kom.",
+          role: role,
+          roleLabel: roleNames[role],
+          semester: semester
+        };
+      }
 
-            const container = document.getElementById('sidebar-menu');
-            container.innerHTML = menus
-                .filter(m => m.roles.includes(currentUser.role))
-                .map(m => `
+      document.getElementById('user-name').textContent = currentUser.nama;
+      document.getElementById('user-role-label').textContent = currentUser.roleLabel;
+      document.getElementById('badge-semester').textContent = currentUser.semester;
+
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('app-screen').classList.remove('hidden');
+
+      renderSidebar();
+      await syncFromGoogleSheets();
+      navigate('dashboard');
+    });
+
+    function logout() {
+      currentUser = null;
+      document.getElementById('app-screen').classList.add('hidden');
+      document.getElementById('login-screen').classList.remove('hidden');
+    }
+
+    function renderSidebar() {
+      const menus = [
+        { id: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard', roles: ['guru', 'walas', 'admin'] },
+        { id: 'input-nilai', label: 'Nilai Akademik & TP', icon: 'edit-3', roles: ['guru', 'admin'] },
+        { id: 'walas-input', label: 'Absensi, Ekskul & PKL', icon: 'clipboard-check', roles: ['walas', 'admin'] },
+        { id: 'cetak-rapor', label: 'Cetak Rapor & Leger', icon: 'printer', roles: ['walas', 'admin'] },
+        { id: 'data-master', label: 'Impor Model 8335 & Server', icon: 'upload-cloud', roles: ['admin'] }
+      ];
+
+      const container = document.getElementById('sidebar-menu');
+      container.innerHTML = menus
+        .filter(m => m.roles.includes(currentUser.role))
+        .map(m => `
           <button onclick="navigate('${m.id}')" id="nav-${m.id}" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition text-blue-100 hover:bg-blue-900">
             <i data-lucide="${m.icon}" class="w-4 h-4"></i>
             <span>${m.label}</span>
           </button>
         `).join('');
-            lucide.createIcons();
-        }
+      lucide.createIcons();
+    }
 
-        function navigate(tabId) {
-            currentTab = tabId;
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('bg-blue-700', 'text-white', 'font-semibold');
-                btn.classList.add('text-blue-100');
-            });
-            const activeBtn = document.getElementById(`nav-${tabId}`);
-            if (activeBtn) {
-                activeBtn.classList.add('bg-blue-700', 'text-white', 'font-semibold');
-                activeBtn.classList.remove('text-blue-100');
-            }
+    function navigate(tabId) {
+      currentTab = tabId;
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('bg-blue-700', 'text-white', 'font-semibold');
+        btn.classList.add('text-blue-100');
+      });
+      const activeBtn = document.getElementById(`nav-${tabId}`);
+      if (activeBtn) {
+        activeBtn.classList.add('bg-blue-700', 'text-white', 'font-semibold');
+        activeBtn.classList.remove('text-blue-100');
+      }
 
-            const titles = {
-                'dashboard': 'Dashboard e-Rapor SMK',
-                'input-nilai': 'Input Nilai Akhir & Capaian Kompetensi',
-                'walas-input': 'Input Data Wali Kelas (Absensi, Ekskul, PKL)',
-                'cetak-rapor': 'Pratinjau & Cetak Rapor Kurikulum Merdeka',
-                'data-master': 'Impor Excel Model 8335 & Konfigurasi Google Sheets'
-            };
-            document.getElementById('page-title').textContent = titles[tabId] || 'Dashboard';
+      const titles = {
+        'dashboard': 'Dashboard e-Rapor SMK',
+        'input-nilai': 'Input Nilai Akhir & Capaian Kompetensi',
+        'walas-input': 'Input Data Wali Kelas (Absensi, Ekskul, PKL)',
+        'cetak-rapor': 'Pratinjau & Cetak Rapor Kurikulum Merdeka',
+        'data-master': 'Impor Excel Model 8335 & Konfigurasi Google Sheets'
+      };
+      document.getElementById('page-title').textContent = titles[tabId] || 'Dashboard';
 
-            const content = document.getElementById('main-content');
-            if (tabId === 'dashboard') renderDashboard(content);
-            if (tabId === 'input-nilai') renderInputNilai(content);
-            if (tabId === 'walas-input') renderWalasInput(content);
-            if (tabId === 'cetak-rapor') renderCetakRapor(content);
-            if (tabId === 'data-master') renderDataMaster(content);
+      const content = document.getElementById('main-content');
+      if (tabId === 'dashboard') renderDashboard(content);
+      if (tabId === 'input-nilai') renderInputNilai(content);
+      if (tabId === 'walas-input') renderWalasInput(content);
+      if (tabId === 'cetak-rapor') renderCetakRapor(content);
+      if (tabId === 'data-master') renderDataMaster(content);
+      
+      lucide.createIcons();
+    }
 
-            lucide.createIcons();
-        }
+    function getDaftarKelas() {
+      const setKelas = new Set(db.siswa.map(s => s.kelas).filter(Boolean));
+      return Array.from(setKelas);
+    }
 
-        function getDaftarKelas() {
-            const setKelas = new Set(db.siswa.map(s => s.kelas).filter(Boolean));
-            return Array.from(setKelas);
-        }
+    function getFilteredSiswa() {
+      if (selectedKelas === 'ALL') return db.siswa;
+      return db.siswa.filter(s => s.kelas === selectedKelas);
+    }
 
-        function getFilteredSiswa() {
-            if (selectedKelas === 'ALL') return db.siswa;
-            return db.siswa.filter(s => s.kelas === selectedKelas);
-        }
+    // ==================== VIEW 1: DASHBOARD ====================
+    function renderDashboard(container) {
+      const daftarKelas = getDaftarKelas();
+      const rekapKelas = daftarKelas.map(k => {
+        const jml = db.siswa.filter(s => s.kelas === k).length;
+        return `<span class="px-2.5 py-1 bg-blue-50 border border-blue-200 text-blue-800 rounded-md text-xs font-medium">${k}: <b>${jml}</b></span>`;
+      }).join('');
 
-        // ==================== VIEW 1: DASHBOARD ====================
-        function renderDashboard(container) {
-            const daftarKelas = getDaftarKelas();
-            const rekapKelas = daftarKelas.map(k => {
-                const jml = db.siswa.filter(s => s.kelas === k).length;
-                return `<span class="px-2.5 py-1 bg-blue-50 border border-blue-200 text-blue-800 rounded-md text-xs font-medium">${k}: <b>${jml}</b></span>`;
-            }).join('');
-
-            container.innerHTML = `
+      container.innerHTML = `
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-blue-600">
             <p class="text-xs text-slate-500 font-semibold uppercase">Total Peserta Didik</p>
@@ -514,28 +483,28 @@
           </div>
         </div>
       `;
+    }
+
+    // ==================== VIEW 2: INPUT NILAI & TP ====================
+    function renderInputNilai(container) {
+      const mapelAktif = "Dasar-Dasar Kejuruan";
+      const daftarKelas = getDaftarKelas();
+      if (selectedKelas === 'ALL' && daftarKelas.length > 0) selectedKelas = daftarKelas[0];
+      const siswaList = getFilteredSiswa();
+
+      const kelasOptions = daftarKelas.map(k => `<option value="${k}" ${k === selectedKelas ? 'selected' : ''}>${k}</option>`).join('');
+
+      let rows = siswaList.map((s, idx) => {
+        ensureSiswaDefaults(s);
+        if (!s.nilaiMapel[mapelAktif]) {
+          s.nilaiMapel[mapelAktif] = { nilai: 0, tercapai: [], perluBimbingan: [], deskripsi: "" };
         }
-
-        // ==================== VIEW 2: INPUT NILAI & TP ====================
-        function renderInputNilai(container) {
-            const mapelAktif = "Dasar-Dasar Kejuruan";
-            const daftarKelas = getDaftarKelas();
-            if (selectedKelas === 'ALL' && daftarKelas.length > 0) selectedKelas = daftarKelas[0];
-            const siswaList = getFilteredSiswa();
-
-            const kelasOptions = daftarKelas.map(k => `<option value="${k}" ${k === selectedKelas ? 'selected' : ''}>${k}</option>`).join('');
-
-            let rows = siswaList.map((s, idx) => {
-                ensureSiswaDefaults(s);
-                if (!s.nilaiMapel[mapelAktif]) {
-                    s.nilaiMapel[mapelAktif] = {nilai: 0, tercapai: [], perluBimbingan: [], deskripsi: ""};
-                }
-                const dataNilai = s.nilaiMapel[mapelAktif];
-
-                const tpCheckboxes = db.tpList.map(tp => {
-                    const isTercapai = dataNilai.tercapai.includes(tp.id);
-                    const isBimbingan = dataNilai.perluBimbingan.includes(tp.id);
-                    return `
+        const dataNilai = s.nilaiMapel[mapelAktif];
+        
+        const tpCheckboxes = db.tpList.map(tp => {
+          const isTercapai = dataNilai.tercapai.includes(tp.id);
+          const isBimbingan = dataNilai.perluBimbingan.includes(tp.id);
+          return `
             <div class="flex items-start justify-between gap-2 text-xs py-1 border-b border-slate-100 last:border-0">
               <span class="text-slate-700 flex-1"><b>${tp.id}:</b> ${tp.teks}</span>
               <div class="flex gap-2 shrink-0">
@@ -548,9 +517,9 @@
               </div>
             </div>
           `;
-                }).join('');
+        }).join('');
 
-                return `
+        return `
           <tr class="border-b hover:bg-slate-50/80 align-top">
             <td class="p-3 text-center font-medium">${idx + 1}</td>
             <td class="p-3">
@@ -571,9 +540,9 @@
             </td>
           </tr>
         `;
-            }).join('');
+      }).join('');
 
-            container.innerHTML = `
+      container.innerHTML = `
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div class="p-4 bg-slate-50 border-b flex flex-wrap items-center justify-between gap-4">
             <div class="flex flex-wrap items-center gap-3">
@@ -616,110 +585,110 @@
           </div>
         </div>
       `;
+    }
+
+    function updateNilaiAngka(nis, val) {
+      const s = db.siswa.find(x => x.nis === nis);
+      if (s) s.nilaiMapel["Dasar-Dasar Kejuruan"].nilai = parseInt(val) || 0;
+    }
+
+    function updateDeskripsiManual(nis, val) {
+      const s = db.siswa.find(x => x.nis === nis);
+      if (s) s.nilaiMapel["Dasar-Dasar Kejuruan"].deskripsi = val;
+    }
+
+    function toggleTP(nis, tpId, tipe, checked) {
+      const s = db.siswa.find(x => x.nis === nis);
+      if (!s) return;
+      const m = s.nilaiMapel["Dasar-Dasar Kejuruan"];
+      if (tipe === 'tercapai') {
+        if (checked) {
+          if (!m.tercapai.includes(tpId)) m.tercapai.push(tpId);
+          m.perluBimbingan = m.perluBimbingan.filter(id => id !== tpId);
+        } else {
+          m.tercapai = m.tercapai.filter(id => id !== tpId);
         }
-
-        function updateNilaiAngka(nis, val) {
-            const s = db.siswa.find(x => x.nis === nis);
-            if (s) s.nilaiMapel["Dasar-Dasar Kejuruan"].nilai = parseInt(val) || 0;
+      } else {
+        if (checked) {
+          if (!m.perluBimbingan.includes(tpId)) m.perluBimbingan.push(tpId);
+          m.tercapai = m.tercapai.filter(id => id !== tpId);
+        } else {
+          m.perluBimbingan = m.perluBimbingan.filter(id => id !== tpId);
         }
+      }
+      m.deskripsi = generateDeskripsi(m.tercapai, m.perluBimbingan);
+      renderInputNilai(document.getElementById('main-content'));
+      lucide.createIcons();
+    }
 
-        function updateDeskripsiManual(nis, val) {
-            const s = db.siswa.find(x => x.nis === nis);
-            if (s) s.nilaiMapel["Dasar-Dasar Kejuruan"].deskripsi = val;
-        }
+    async function simpanNilaiKeServer() {
+      const siswaList = getFilteredSiswa();
+      const items = siswaList.map(s => {
+        const m = s.nilaiMapel["Dasar-Dasar Kejuruan"];
+        return {
+          nis: s.nis,
+          mapel: "Dasar-Dasar Kejuruan",
+          nilai_akhir: m.nilai,
+          tp_tercapai: m.tercapai,
+          tp_bimbingan: m.perluBimbingan,
+          deskripsi: m.deskripsi
+        };
+      });
 
-        function toggleTP(nis, tpId, tipe, checked) {
-            const s = db.siswa.find(x => x.nis === nis);
-            if (!s) return;
-            const m = s.nilaiMapel["Dasar-Dasar Kejuruan"];
-            if (tipe === 'tercapai') {
-                if (checked) {
-                    if (!m.tercapai.includes(tpId)) m.tercapai.push(tpId);
-                    m.perluBimbingan = m.perluBimbingan.filter(id => id !== tpId);
-                } else {
-                    m.tercapai = m.tercapai.filter(id => id !== tpId);
-                }
-            } else {
-                if (checked) {
-                    if (!m.perluBimbingan.includes(tpId)) m.perluBimbingan.push(tpId);
-                    m.tercapai = m.tercapai.filter(id => id !== tpId);
-                } else {
-                    m.perluBimbingan = m.perluBimbingan.filter(id => id !== tpId);
-                }
-            }
-            m.deskripsi = generateDeskripsi(m.tercapai, m.perluBimbingan);
-            renderInputNilai(document.getElementById('main-content'));
-            lucide.createIcons();
-        }
+      if (!GAS_WEB_APP_URL) {
+        alert(`Tersimpan di memori lokal (${items.length} siswa kelas ${selectedKelas}). Isi URL Apps Script di menu Admin untuk menyimpan ke Google Sheets.`);
+        return;
+      }
 
-        async function simpanNilaiKeServer() {
-            const siswaList = getFilteredSiswa();
-            const items = siswaList.map(s => {
-                const m = s.nilaiMapel["Dasar-Dasar Kejuruan"];
-                return {
-                    nis: s.nis,
-                    mapel: "Dasar-Dasar Kejuruan",
-                    nilai_akhir: m.nilai,
-                    tp_tercapai: m.tercapai,
-                    tp_bimbingan: m.perluBimbingan,
-                    deskripsi: m.deskripsi
-                };
-            });
+      setSyncBadge('loading', 'Menyimpan Nilai...');
+      try {
+        const res = await callGasPost({ action: "saveNilai", items });
+        setSyncBadge('online', 'Nilai Tersimpan');
+        alert(res.message || "Berhasil menyimpan nilai!");
+      } catch (err) {
+        setSyncBadge('local', 'Gagal Simpan');
+        alert("Gagal mengirim data ke Google Sheets: " + err.message);
+      }
+    }
 
-            if (!GAS_WEB_APP_URL) {
-                alert(`Tersimpan di memori lokal (${items.length} siswa kelas ${selectedKelas}). Isi URL Apps Script di menu Admin untuk menyimpan ke Google Sheets.`);
-                return;
-            }
-
-            setSyncBadge('loading', 'Menyimpan Nilai...');
-            try {
-                const res = await callGasPost({action: "saveNilai", items});
-                setSyncBadge('online', 'Nilai Tersimpan');
-                alert(res.message || "Berhasil menyimpan nilai!");
-            } catch (err) {
-                setSyncBadge('local', 'Gagal Simpan');
-                alert("Gagal mengirim data ke Google Sheets: " + err.message);
-            }
-        }
-
-        // Modal TP
-        function openModalTP() {
-            const list = document.getElementById('tp-list-container');
-            list.innerHTML = db.tpList.map(tp => `
+    // Modal TP
+    function openModalTP() {
+      const list = document.getElementById('tp-list-container');
+      list.innerHTML = db.tpList.map(tp => `
         <div class="p-2.5 bg-slate-50 border rounded-lg text-xs flex justify-between items-center">
           <span><b>${tp.id}:</b> ${tp.teks}</span>
         </div>
       `).join('');
-            document.getElementById('modal-tp').classList.remove('hidden');
-        }
-        function closeModalTP() {document.getElementById('modal-tp').classList.add('hidden');}
-        async function addTP() {
-            const input = document.getElementById('new-tp-input');
-            if (!input.value.trim()) return;
-            const nextId = "TP" + (db.tpList.length + 1);
-            const teks = input.value.trim();
-            db.tpList.push({id: nextId, mapel: "Dasar-Dasar Kejuruan", teks});
-            input.value = "";
-            openModalTP();
-            if (GAS_WEB_APP_URL) {
-                await callGasPost({action: "addTP", id_tp: nextId, mapel: "Dasar-Dasar Kejuruan", deskripsi_tp: teks});
-            }
-            if (currentTab === 'input-nilai') {
-                renderInputNilai(document.getElementById('main-content'));
-                lucide.createIcons();
-            }
-        }
+      document.getElementById('modal-tp').classList.remove('hidden');
+    }
+    function closeModalTP() { document.getElementById('modal-tp').classList.add('hidden'); }
+    async function addTP() {
+      const input = document.getElementById('new-tp-input');
+      if (!input.value.trim()) return;
+      const nextId = "TP" + (db.tpList.length + 1);
+      const teks = input.value.trim();
+      db.tpList.push({ id: nextId, mapel: "Dasar-Dasar Kejuruan", teks });
+      input.value = "";
+      openModalTP();
+      if (GAS_WEB_APP_URL) {
+        await callGasPost({ action: "addTP", id_tp: nextId, mapel: "Dasar-Dasar Kejuruan", deskripsi_tp: teks });
+      }
+      if (currentTab === 'input-nilai') {
+        renderInputNilai(document.getElementById('main-content'));
+        lucide.createIcons();
+      }
+    }
 
-        // ==================== VIEW 3: INPUT WALI KELAS ====================
-        function renderWalasInput(container) {
-            const daftarKelas = getDaftarKelas();
-            if (selectedKelas === 'ALL' && daftarKelas.length > 0) selectedKelas = daftarKelas[0];
-            const siswaList = getFilteredSiswa();
-            const kelasOptions = daftarKelas.map(k => `<option value="${k}" ${k === selectedKelas ? 'selected' : ''}>${k}</option>`).join('');
+    // ==================== VIEW 3: INPUT WALI KELAS ====================
+    function renderWalasInput(container) {
+      const daftarKelas = getDaftarKelas();
+      if (selectedKelas === 'ALL' && daftarKelas.length > 0) selectedKelas = daftarKelas[0];
+      const siswaList = getFilteredSiswa();
+      const kelasOptions = daftarKelas.map(k => `<option value="${k}" ${k === selectedKelas ? 'selected' : ''}>${k}</option>`).join('');
 
-            let rows = siswaList.map((s, idx) => {
-                ensureSiswaDefaults(s);
-                return `
+      let rows = siswaList.map((s, idx) => {
+        ensureSiswaDefaults(s);
+        return `
           <tr class="border-b hover:bg-slate-50 align-top">
             <td class="p-3 font-medium">${idx + 1}</td>
             <td class="p-3">
@@ -755,9 +724,9 @@
             </td>
           </tr>
         `;
-            }).join('');
+      }).join('');
 
-            container.innerHTML = `
+      container.innerHTML = `
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div class="p-4 bg-slate-50 border-b flex flex-wrap justify-between items-center gap-3">
             <div class="flex items-center gap-3">
@@ -787,63 +756,63 @@
           </div>
         </div>
       `;
-        }
+    }
 
-        function updateWalasField(nis, field, val) {
-            const s = db.siswa.find(x => x.nis === nis);
-            if (!s) return;
-            if (field === 'sakit') s.absensi.sakit = parseInt(val) || 0;
-            if (field === 'izin') s.absensi.izin = parseInt(val) || 0;
-            if (field === 'alpa') s.absensi.alpa = parseInt(val) || 0;
-            if (field === 'ekskul_nama') s.ekskul[0].nama = val;
-            if (field === 'ekskul_ket') s.ekskul[0].ket = val;
-            if (field === 'pkl_mitra') s.pkl.mitra = val;
-            if (field === 'pkl_ket') s.pkl.ket = val;
-            if (field === 'catatan') s.catatanWalas = val;
-        }
+    function updateWalasField(nis, field, val) {
+      const s = db.siswa.find(x => x.nis === nis);
+      if (!s) return;
+      if (field === 'sakit') s.absensi.sakit = parseInt(val) || 0;
+      if (field === 'izin') s.absensi.izin = parseInt(val) || 0;
+      if (field === 'alpa') s.absensi.alpa = parseInt(val) || 0;
+      if (field === 'ekskul_nama') s.ekskul[0].nama = val;
+      if (field === 'ekskul_ket') s.ekskul[0].ket = val;
+      if (field === 'pkl_mitra') s.pkl.mitra = val;
+      if (field === 'pkl_ket') s.pkl.ket = val;
+      if (field === 'catatan') s.catatanWalas = val;
+    }
 
-        async function simpanWalasKeServer() {
-            const siswaList = getFilteredSiswa();
-            const items = siswaList.map(s => ({
-                nis: s.nis,
-                sakit: s.absensi.sakit,
-                izin: s.absensi.izin,
-                alpa: s.absensi.alpa,
-                ekskul_nama: s.ekskul[0].nama,
-                ekskul_ket: s.ekskul[0].ket,
-                pkl_mitra: s.pkl.mitra,
-                pkl_lokasi: s.pkl.lokasi,
-                pkl_lama: s.pkl.lama,
-                pkl_ket: s.pkl.ket,
-                catatan: s.catatanWalas
-            }));
+    async function simpanWalasKeServer() {
+      const siswaList = getFilteredSiswa();
+      const items = siswaList.map(s => ({
+        nis: s.nis,
+        sakit: s.absensi.sakit,
+        izin: s.absensi.izin,
+        alpa: s.absensi.alpa,
+        ekskul_nama: s.ekskul[0].nama,
+        ekskul_ket: s.ekskul[0].ket,
+        pkl_mitra: s.pkl.mitra,
+        pkl_lokasi: s.pkl.lokasi,
+        pkl_lama: s.pkl.lama,
+        pkl_ket: s.pkl.ket,
+        catatan: s.catatanWalas
+      }));
 
-            if (!GAS_WEB_APP_URL) {
-                alert(`Data wali kelas (${items.length} siswa) tersimpan di memori lokal.`);
-                return;
-            }
+      if (!GAS_WEB_APP_URL) {
+        alert(`Data wali kelas (${items.length} siswa) tersimpan di memori lokal.`);
+        return;
+      }
 
-            setSyncBadge('loading', 'Menyimpan Data Walas...');
-            try {
-                const res = await callGasPost({action: "saveWalas", items});
-                setSyncBadge('online', 'Data Walas Tersimpan');
-                alert(res.message || "Data wali kelas berhasil disimpan!");
-            } catch (err) {
-                setSyncBadge('local', 'Gagal Simpan');
-                alert("Gagal menyimpan ke Google Sheets: " + err.message);
-            }
-        }
+      setSyncBadge('loading', 'Menyimpan Data Walas...');
+      try {
+        const res = await callGasPost({ action: "saveWalas", items });
+        setSyncBadge('online', 'Data Walas Tersimpan');
+        alert(res.message || "Data wali kelas berhasil disimpan!");
+      } catch (err) {
+        setSyncBadge('local', 'Gagal Simpan');
+        alert("Gagal menyimpan ke Google Sheets: " + err.message);
+      }
+    }
 
-        // ==================== VIEW 4: CETAK RAPOR RESMI ====================
-        function renderCetakRapor(container) {
-            const daftarKelas = getDaftarKelas();
-            if (selectedKelas === 'ALL' && daftarKelas.length > 0) selectedKelas = daftarKelas[0];
-            const siswaList = getFilteredSiswa();
+    // ==================== VIEW 4: CETAK RAPOR RESMI ====================
+    function renderCetakRapor(container) {
+      const daftarKelas = getDaftarKelas();
+      if (selectedKelas === 'ALL' && daftarKelas.length > 0) selectedKelas = daftarKelas[0];
+      const siswaList = getFilteredSiswa();
 
-            const kelasOptions = daftarKelas.map(k => `<option value="${k}" ${k === selectedKelas ? 'selected' : ''}>${k}</option>`).join('');
-            const siswaOptions = siswaList.map(s => `<option value="${s.nis}">${s.nis} - ${s.nama}</option>`).join('');
-
-            container.innerHTML = `
+      const kelasOptions = daftarKelas.map(k => `<option value="${k}" ${k === selectedKelas ? 'selected' : ''}>${k}</option>`).join('');
+      const siswaOptions = siswaList.map(s => `<option value="${s.nis}">${s.nis} - ${s.nama}</option>`).join('');
+      
+      container.innerHTML = `
         <div class="bg-white p-4 rounded-xl shadow-sm border mb-6 flex flex-wrap items-center justify-between gap-4 no-print">
           <div class="flex flex-wrap items-center gap-3">
             <div>
@@ -866,21 +835,21 @@
 
         <div id="print-area" class="bg-white p-8 md:p-12 rounded-xl shadow-md max-w-4xl mx-auto border border-slate-200 text-black" style="font-family: 'Times New Roman', serif;"></div>
       `;
-            if (siswaList.length > 0) updatePreviewRapor(siswaList[0].nis);
-        }
+      if (siswaList.length > 0) updatePreviewRapor(siswaList[0].nis);
+    }
 
-        function updatePreviewRapor(nis) {
-            const s = db.siswa.find(x => x.nis === nis) || db.siswa[0];
-            ensureSiswaDefaults(s);
+    function updatePreviewRapor(nis) {
+      const s = db.siswa.find(x => x.nis === nis) || db.siswa[0];
+      ensureSiswaDefaults(s);
 
-            const umumList = ["Pendidikan Agama dan Budi Pekerti", "Pendidikan Pancasila", "Bahasa Indonesia", "Matematika", "Bahasa Inggris"];
-            const kejuruanList = ["Dasar-Dasar Kejuruan"];
+      const umumList = ["Pendidikan Agama dan Budi Pekerti", "Pendidikan Pancasila", "Bahasa Indonesia", "Matematika", "Bahasa Inggris"];
+      const kejuruanList = ["Dasar-Dasar Kejuruan"];
 
-            const fase = s.kelas.startsWith("X ") ? "E" : "F";
+      const fase = s.kelas.startsWith("X ") ? "E" : "F";
 
-            const renderRows = (list, startNo) => list.map((mapel, i) => {
-                const data = s.nilaiMapel[mapel] || {nilai: "-", deskripsi: "-"};
-                return `
+      const renderRows = (list, startNo) => list.map((mapel, i) => {
+        const data = s.nilaiMapel[mapel] || { nilai: "-", deskripsi: "-" };
+        return `
           <tr>
             <td class="border border-black px-2 py-1.5 text-center">${startNo + i}</td>
             <td class="border border-black px-2 py-1.5">${mapel}</td>
@@ -888,9 +857,9 @@
             <td class="border border-black px-2 py-1.5 text-justify text-xs leading-relaxed">${data.deskripsi}</td>
           </tr>
         `;
-            }).join('');
+      }).join('');
 
-            document.getElementById('print-area').innerHTML = `
+      document.getElementById('print-area').innerHTML = `
         <div class="text-center border-b-2 border-black pb-3 mb-5">
           <h2 class="text-base font-bold uppercase tracking-wide">LAPORAN HASIL BELAJAR (RAPOR)</h2>
           <h3 class="text-sm font-bold uppercase">${db.sekolah.nama}</h3>
@@ -1011,13 +980,13 @@
           </div>
         </div>
       `;
-        }
+    }
 
-        // ==================== VIEW 5: IMPOR MODEL 8335 & SERVER ====================
-        let parsedImportSiswa = [];
+    // ==================== VIEW 5: IMPOR MODEL 8335 & SERVER ====================
+    let parsedImportSiswa = [];
 
-        function renderDataMaster(container) {
-            container.innerHTML = `
+    function renderDataMaster(container) {
+      container.innerHTML = `
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <!-- Panel 1: Impor Excel Model 8335 -->
           <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
@@ -1097,90 +1066,90 @@
           </div>
         </div>
       `;
-        }
+    }
 
-        function saveGasUrl() {
-            const url = document.getElementById('gas-url-input').value.trim();
-            GAS_WEB_APP_URL = url;
-            localStorage.setItem('erapor_gas_url', url);
-            syncFromGoogleSheets();
-            alert("URL Google Apps Script disimpan!");
-        }
+    function saveGasUrl() {
+      const url = document.getElementById('gas-url-input').value.trim();
+      GAS_WEB_APP_URL = url;
+      localStorage.setItem('erapor_gas_url', url);
+      syncFromGoogleSheets();
+      alert("URL Google Apps Script disimpan!");
+    }
 
-        // Parser Khusus Struktur Model 8335 SMK Filadelfia Pemangkat
-        function handleExcel8335Upload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
+    // Parser Khusus Struktur Model 8335 SMK Filadelfia Pemangkat
+    function handleExcel8335Upload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
 
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, {type: 'array'});
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
 
-                const sheetMeta = {
-                    'AP12': {kelas: 'XII OTKP', jurusan: 'Otomatisasi dan Tata Kelola Perkantoran'},
-                    'AKL12': {kelas: 'XII AKL', jurusan: 'Akuntansi dan Keuangan Lembaga'},
-                    'TKJ12': {kelas: 'XII TKJ', jurusan: 'Teknik Komputer dan Jaringan'},
-                    'AP11': {kelas: 'XI OTKP', jurusan: 'Otomatisasi dan Tata Kelola Perkantoran'},
-                    'AKL11': {kelas: 'XI AKL', jurusan: 'Akuntansi dan Keuangan Lembaga'},
-                    'TKJ11': {kelas: 'XI TKJ', jurusan: 'Teknik Komputer dan Jaringan'},
-                    'AP10': {kelas: 'X OTKP', jurusan: 'Otomatisasi dan Tata Kelola Perkantoran'},
-                    'AKL10': {kelas: 'X AKL', jurusan: 'Akuntansi dan Keuangan Lembaga'},
-                    'TKJ10': {kelas: 'X TKJ', jurusan: 'Teknik Komputer dan Jaringan'}
-                };
+        const sheetMeta = {
+          'AP12':  { kelas: 'XII OTKP', jurusan: 'Otomatisasi dan Tata Kelola Perkantoran' },
+          'AKL12': { kelas: 'XII AKL',  jurusan: 'Akuntansi dan Keuangan Lembaga' },
+          'TKJ12': { kelas: 'XII TKJ',  jurusan: 'Teknik Komputer dan Jaringan' },
+          'AP11':  { kelas: 'XI OTKP',  jurusan: 'Otomatisasi dan Tata Kelola Perkantoran' },
+          'AKL11': { kelas: 'XI AKL',   jurusan: 'Akuntansi dan Keuangan Lembaga' },
+          'TKJ11': { kelas: 'XI TKJ',   jurusan: 'Teknik Komputer dan Jaringan' },
+          'AP10':  { kelas: 'X OTKP',   jurusan: 'Otomatisasi dan Tata Kelola Perkantoran' },
+          'AKL10': { kelas: 'X AKL',    jurusan: 'Akuntansi dan Keuangan Lembaga' },
+          'TKJ10': { kelas: 'X TKJ',    jurusan: 'Teknik Komputer dan Jaringan' }
+        };
 
-                const hasil = [];
+        const hasil = [];
 
-                workbook.SheetNames.forEach(sheetName => {
-                    const key = sheetName.trim().toUpperCase();
-                    if (!sheetMeta[key]) return; // Lewati tab DATA KELUAR MASUK SISWA & Sheet2
+        workbook.SheetNames.forEach(sheetName => {
+          const key = sheetName.trim().toUpperCase();
+          if (!sheetMeta[key]) return; // Lewati tab DATA KELUAR MASUK SISWA & Sheet2
 
-                    const ws = workbook.Sheets[sheetName];
-                    const rows = XLSX.utils.sheet_to_json(ws, {header: 1, defval: ""});
+          const ws = workbook.Sheets[sheetName];
+          const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
 
-                    // Cari baris header yang mengandung kolom "NISN" dan "NAMA SISWA"
-                    let headerIdx = -1;
-                    let colNis = 1, colNisn = 2, colNama = 3;
-                    for (let r = 0; r < Math.min(rows.length, 20); r++) {
-                        const normalized = rows[r].map(c => String(c).trim().toUpperCase());
-                        if (normalized.includes("NISN") && normalized.includes("NAMA SISWA")) {
-                            headerIdx = r;
-                            colNis = normalized.indexOf("NIS");
-                            colNisn = normalized.indexOf("NISN");
-                            colNama = normalized.indexOf("NAMA SISWA");
-                            break;
-                        }
-                    }
+          // Cari baris header yang mengandung kolom "NISN" dan "NAMA SISWA"
+          let headerIdx = -1;
+          let colNis = 1, colNisn = 2, colNama = 3;
+          for (let r = 0; r < Math.min(rows.length, 20); r++) {
+            const normalized = rows[r].map(c => String(c).trim().toUpperCase());
+            if (normalized.includes("NISN") && normalized.includes("NAMA SISWA")) {
+              headerIdx = r;
+              colNis = normalized.indexOf("NIS");
+              colNisn = normalized.indexOf("NISN");
+              colNama = normalized.indexOf("NAMA SISWA");
+              break;
+            }
+          }
 
-                    if (headerIdx === -1) return;
+          if (headerIdx === -1) return;
 
-                    for (let r = headerIdx + 1; r < rows.length; r++) {
-                        const row = rows[r];
-                        const rawNama = String(row[colNama] || "").trim();
-                        const rawNis = String(row[colNis] || "").trim();
-                        const rawNisn = String(row[colNisn] || "").trim();
+          for (let r = headerIdx + 1; r < rows.length; r++) {
+            const row = rows[r];
+            const rawNama = String(row[colNama] || "").trim();
+            const rawNis = String(row[colNis] || "").trim();
+            const rawNisn = String(row[colNisn] || "").trim();
 
-                        if (!rawNama || rawNama === "NAMA SISWA" || rawNama.toUpperCase().startsWith("JUMLAH")) continue;
-                        // Pastikan baris data valid (minimal ada NIS atau NISN angka)
-                        if (!rawNis && !rawNisn) continue;
+            if (!rawNama || rawNama === "NAMA SISWA" || rawNama.toUpperCase().startsWith("JUMLAH")) continue;
+            // Pastikan baris data valid (minimal ada NIS atau NISN angka)
+            if (!rawNis && !rawNisn) continue;
 
-                        // Pertahankan leading zero NISN (10 digit) jika terpotong angka Excel
-                        const cleanNisn = /^\d+$/.test(rawNisn) && rawNisn.length < 10 ? rawNisn.padStart(10, '0') : rawNisn;
+            // Pertahankan leading zero NISN (10 digit) jika terpotong angka Excel
+            const cleanNisn = /^\d+$/.test(rawNisn) && rawNisn.length < 10 ? rawNisn.padStart(10, '0') : rawNisn;
 
-                        hasil.push({
-                            nis: rawNis,
-                            nisn: cleanNisn,
-                            nama: rawNama,
-                            kelas: sheetMeta[key].kelas,
-                            jurusan: sheetMeta[key].jurusan
-                        });
-                    }
-                });
+            hasil.push({
+              nis: rawNis,
+              nisn: cleanNisn,
+              nama: rawNama,
+              kelas: sheetMeta[key].kelas,
+              jurusan: sheetMeta[key].jurusan
+            });
+          }
+        });
 
-                parsedImportSiswa = hasil;
-                document.getElementById('import-preview-box').classList.remove('hidden');
-                document.getElementById('import-summary').innerHTML = `Berhasil mengekstrak <b>${hasil.length} siswa aktif</b> dari 9 tab kelas.`;
-                document.getElementById('import-preview-tbody').innerHTML = hasil.slice(0, 50).map(s => `
+        parsedImportSiswa = hasil;
+        document.getElementById('import-preview-box').classList.remove('hidden');
+        document.getElementById('import-summary').innerHTML = `Berhasil mengekstrak <b>${hasil.length} siswa aktif</b> dari 9 tab kelas.`;
+        document.getElementById('import-preview-tbody').innerHTML = hasil.slice(0, 50).map(s => `
           <tr class="border-t">
             <td class="p-2">${s.nis}</td>
             <td class="p-2">${s.nisn}</td>
@@ -1189,37 +1158,36 @@
             <td class="p-2 text-slate-500">${s.jurusan}</td>
           </tr>
         `).join('') + (hasil.length > 50 ? `<tr><td colspan="5" class="p-2 text-center text-slate-400">... dan ${hasil.length - 50} siswa lainnya</td></tr>` : '');
-            };
-            reader.readAsArrayBuffer(file);
-        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
 
-        function applyImportedSiswaToLocal() {
-            if (!parsedImportSiswa.length) return;
-            db.siswa = parsedImportSiswa.map(s => ensureSiswaDefaults({...s}));
-            selectedKelas = db.siswa[0].kelas;
-            setSyncBadge('online', `${db.siswa.length} Siswa Dimuat`);
-            alert(`Berhasil memuat ${db.siswa.length} siswa ke aplikasi! Silakan cek menu Dashboard, Nilai Akademik, atau Cetak Rapor.`);
-        }
+    function applyImportedSiswaToLocal() {
+      if (!parsedImportSiswa.length) return;
+      db.siswa = parsedImportSiswa.map(s => ensureSiswaDefaults({ ...s }));
+      selectedKelas = db.siswa[0].kelas;
+      setSyncBadge('online', `${db.siswa.length} Siswa Dimuat`);
+      alert(`Berhasil memuat ${db.siswa.length} siswa ke aplikasi! Silakan cek menu Dashboard, Nilai Akademik, atau Cetak Rapor.`);
+    }
 
-        async function pushImportedSiswaToSheets() {
-            if (!parsedImportSiswa.length) return;
-            if (!GAS_WEB_APP_URL) {
-                alert("Masukkan URL Web App Google Apps Script di panel sebelah kanan terlebih dahulu.");
-                return;
-            }
-            setSyncBadge('loading', `Mengirim ${parsedImportSiswa.length} Siswa ke Sheets...`);
-            try {
-                const res = await callGasPost({action: "importSiswa", items: parsedImportSiswa});
-                setSyncBadge('online', `${parsedImportSiswa.length} Siswa Tersimpan`);
-                alert(res.message || "Seluruh siswa berhasil diimpor ke Google Sheets!");
-            } catch (err) {
-                setSyncBadge('local', 'Gagal Impor');
-                alert("Gagal mengirim ke Google Sheets: " + err.message);
-            }
-        }
+    async function pushImportedSiswaToSheets() {
+      if (!parsedImportSiswa.length) return;
+      if (!GAS_WEB_APP_URL) {
+        alert("Masukkan URL Web App Google Apps Script di panel sebelah kanan terlebih dahulu.");
+        return;
+      }
+      setSyncBadge('loading', `Mengirim ${parsedImportSiswa.length} Siswa ke Sheets...`);
+      try {
+        const res = await callGasPost({ action: "importSiswa", items: parsedImportSiswa });
+        setSyncBadge('online', `${parsedImportSiswa.length} Siswa Tersimpan`);
+        alert(res.message || "Seluruh siswa berhasil diimpor ke Google Sheets!");
+      } catch (err) {
+        setSyncBadge('local', 'Gagal Impor');
+        alert("Gagal mengirim ke Google Sheets: " + err.message);
+      }
+    }
 
-        lucide.createIcons();
-    </script>
+    lucide.createIcons();
+  </script>
 </body>
-
 </html>
