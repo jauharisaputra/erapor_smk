@@ -133,55 +133,17 @@
     </main>
   </div>
 
-  <!-- ==================== MODAL KELOLA CP, ATP & TUJUAN PEMBELAJARAN ==================== -->
+  <!-- ==================== MODAL KELOLA TUJUAN PEMBELAJARAN ==================== -->
   <div id="modal-tp" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 no-print">
-    <div class="bg-white rounded-xl max-w-3xl w-full p-6 shadow-xl max-h-[90vh] flex flex-col">
-      <div class="flex justify-between items-center border-b pb-3 mb-3">
-        <div>
-          <h3 class="font-bold text-base text-slate-800">Bank Referensi CP, ATP &amp; Tujuan Pembelajaran (TP)</h3>
-          <p id="modal-tp-subtitle" class="text-xs text-slate-500 mt-0.5">Mata Pelajaran: -</p>
-        </div>
-        <div class="flex items-center gap-2">
-          <a href="https://guru.kemendikdasmen.go.id/" target="_blank" rel="noopener noreferrer"
-             class="px-3 py-1.5 bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 rounded-lg text-xs font-semibold flex items-center gap-1.5">
-            <i data-lucide="external-link" class="w-3.5 h-3.5"></i> Buka Ruang GTK
-          </a>
-          <button onclick="closeModalTP()" class="text-slate-400 hover:text-slate-600 p-1">
-            <i data-lucide="x" class="w-5 h-5"></i>
-          </button>
-        </div>
+    <div class="bg-white rounded-xl max-w-lg w-full p-6 shadow-xl">
+      <div class="flex justify-between items-center border-b pb-3 mb-4">
+        <h3 class="font-bold text-base">Daftar Tujuan Pembelajaran (TP)</h3>
+        <button onclick="closeModalTP()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
-
-      <div class="overflow-y-auto space-y-4 pr-1 flex-1">
-        <div class="p-3.5 bg-blue-50/70 border border-blue-200 rounded-lg">
-          <div class="flex items-center justify-between mb-1">
-            <span class="text-[11px] font-bold uppercase tracking-wide text-blue-800">Capaian Pembelajaran (CP) - BSKAP / Kemendikdasmen</span>
-            <span id="modal-cp-fase" class="text-[11px] font-semibold px-2 py-0.5 bg-blue-100 text-blue-800 rounded">Fase E/F</span>
-          </div>
-          <p id="modal-cp-text" class="text-xs text-slate-700 leading-relaxed"></p>
-        </div>
-
-        <div>
-          <div class="flex items-center justify-between mb-2">
-            <h4 class="text-xs font-bold uppercase text-slate-600">Pilih dari Daftar ATP / TP Referensi (Klik untuk Menambahkan)</h4>
-            <button onclick="addAllPresetTP()" class="text-xs text-blue-700 hover:underline font-semibold">+ Tambahkan Semua TP Referensi</button>
-          </div>
-          <div id="preset-tp-container" class="space-y-1.5 max-h-44 overflow-y-auto border border-slate-200 rounded-lg p-2.5 bg-slate-50"></div>
-        </div>
-
-        <div>
-          <h4 class="text-xs font-bold uppercase text-slate-600 mb-2">TP Aktif untuk Penilaian Mata Pelajaran Ini</h4>
-          <div id="tp-list-container" class="space-y-1.5 max-h-40 overflow-y-auto"></div>
-        </div>
-      </div>
-
-      <div class="border-t pt-3 mt-3 space-y-2">
-        <div class="flex gap-2">
-          <input type="text" id="new-tp-input" placeholder="Tambah 1 TP khusus atau tempel beberapa baris ATP dari Ruang GTK..." class="flex-1 px-3 py-2 border rounded-lg text-xs">
-          <button onclick="addTP()" class="bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-semibold hover:bg-blue-800 shrink-0">
-            + Tambah TP
-          </button>
-        </div>
+      <div id="tp-list-container" class="space-y-2 max-h-60 overflow-y-auto mb-4"></div>
+      <div class="flex gap-2">
+        <input type="text" id="new-tp-input" placeholder="Tulis deskripsi TP baru (diawali kata kerja)..." class="flex-1 px-3 py-2 border rounded-lg text-sm">
+        <button onclick="addTP()" class="bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-800">Tambah</button>
       </div>
     </div>
   </div>
@@ -196,12 +158,7 @@
     let selectedKelas = 'ALL';
 
     const db = {
-      users: [
-        { username: "199007012023011001", password: "smkbisa123", nama: "Jauhari Saputra, S.Kom.", role: "admin", ampu: "Kurikulum" },
-        { username: "guru01", password: "smkbisa123", nama: "Guru Mapel Kejuruan", role: "guru", ampu: "Dasar-Dasar Kejuruan" },
-        { username: "walas12tkj", password: "smkbisa123", nama: "Wali Kelas XII TKJ", role: "walas", ampu: "XII TKJ" },
-        { username: "guru02", password: "smkbisa123", nama: "Andi Santoso, S.Pd", role: "guru", ampu: "Matematika" }
-      ],
+      users: [],
       sekolah: {
         nama: "SMK FILADELFIA PEMANGKAT",
         npsn: "30106212",
@@ -512,7 +469,6 @@
     // ==================== AUTH & NAVIGASI ====================
     document.getElementById('login-form').addEventListener('submit', async function(e) {
       e.preventDefault();
-      currentUser = null;
       const role = document.getElementById('login-role').value;
       const semester = document.getElementById('login-semester').value;
       const username = document.getElementById('login-user').value.trim();
@@ -525,55 +481,39 @@
         admin: "Admin / Waka Kurikulum"
       };
 
-      const localMatchedUser = db.users.find(
-        u => String(u.username).trim() === username && String(u.password) === password
-      );
-
-      let gasSucceeded = false;
       if (GAS_WEB_APP_URL) {
         btn.disabled = true;
         btn.innerHTML = `<span class="animate-spin">⏳</span> Memverifikasi...`;
         try {
           const authRes = await callGasPost({ action: "login", username, password });
-          if (authRes && authRes.status === "ok" && authRes.user) {
-            gasSucceeded = true;
-            const resolvedRole = authRes.user.role || role;
+          if (authRes && authRes.status === "ok") {
             currentUser = {
-              nama: authRes.user.nama || localMatchedUser?.nama || "Jauhari Saputra, S.Kom.",
-              role: resolvedRole,
-              roleLabel: roleNames[resolvedRole] || roleNames[role],
+              nama: authRes.user.nama,
+              role: authRes.user.role || role,
+              roleLabel: roleNames[authRes.user.role || role],
               semester: semester
             };
-          } else if (authRes && authRes.status === "error") {
-            if (!localMatchedUser) {
-              alert(authRes.message || "Username atau password salah.");
-              btn.disabled = false;
-              btn.innerHTML = `<i data-lucide="log-in" class="w-4 h-4"></i> Masuk Aplikasi`;
-              lucide.createIcons();
-              return;
-            }
+          } else {
+            alert(authRes?.message || "Login gagal.");
+            btn.disabled = false;
+            btn.innerHTML = `<i data-lucide="log-in" class="w-4 h-4"></i> Masuk Aplikasi`;
+            lucide.createIcons();
+            return;
           }
         } catch (err) {
-          console.warn("GAS login fallback ke mode lokal:", err);
+          alert("Tidak dapat menghubungi server Apps Script. Masuk menggunakan mode lokal.");
         }
         btn.disabled = false;
         btn.innerHTML = `<i data-lucide="log-in" class="w-4 h-4"></i> Masuk Aplikasi`;
-        lucide.createIcons();
       }
 
       if (!currentUser) {
-        if (localMatchedUser) {
-          const activeRole = role || localMatchedUser.role || "admin";
-          currentUser = {
-            nama: localMatchedUser.nama,
-            role: activeRole,
-            roleLabel: roleNames[activeRole] || roleNames.admin,
-            semester: semester
-          };
-        } else {
-          alert("Username atau kata sandi tidak cocok. Gunakan akun terdaftar (contoh: 199007012023011001 / smkbisa123 atau guru01 / smkbisa123).");
-          return;
-        }
+        currentUser = {
+          nama: "Jauhari Saputra, S.Kom.",
+          role: role,
+          roleLabel: roleNames[role],
+          semester: semester
+        };
       }
 
       document.getElementById('user-name').textContent = currentUser.nama;
@@ -584,11 +524,7 @@
       document.getElementById('app-screen').classList.remove('hidden');
 
       renderSidebar();
-      if (gasSucceeded) {
-        await syncFromGoogleSheets();
-      } else {
-        setSyncBadge('local', 'Mode Lokal Aktif');
-      }
+      await syncFromGoogleSheets();
       navigate('dashboard');
     });
 
@@ -726,10 +662,7 @@
         }
         const dataNilai = s.nilaiMapel[mapelAktif];
         
-        const tpUntukMapel = db.tpList.filter(tp => tp.mapel === mapelAktif);
-        const tpCheckboxes = tpUntukMapel.length === 0
-          ? `<p class="text-[11px] text-slate-400 italic">Klik tombol <b>Kelola TP</b> di atas untuk memilih daftar TP ${mapelAktif}.</p>`
-          : tpUntukMapel.map(tp => {
+        const tpCheckboxes = db.tpList.map(tp => {
           const isTercapai = dataNilai.tercapai.includes(tp.id);
           const isBimbingan = dataNilai.perluBimbingan.includes(tp.id);
           return `
@@ -884,241 +817,28 @@
       }
     }
 
-    // ==================== KATALOG REFERENSI CP, ATP & TP (KEMENDIKDASMEN) ====================
-    const BANK_CP_ATP_TP = {
-      "Pendidikan Agama dan Budi Pekerti": {
-        cp: "Peserta didik mampu memahami ajaran agama, menerapkan akhlak mulia dalam kehidupan sehari-hari, menjaga kerukunan antarumat beragama, serta menunjukkan kepedulian sosial di lingkungan sekolah dan masyarakat.",
-        atpTp: [
-          "memahami nilai-nilai keimanan dan akhlak mulia dalam kehidupan sehari-hari",
-          "menerapkan sikap jujur, disiplin, dan tanggung jawab di lingkungan sekolah",
-          "menunjukkan perilaku toleransi dan kepedulian sosial terhadap sesama"
-        ]
-      },
-      "Pendidikan Pancasila": {
-        cp: "Peserta didik mampu menganalisis nilai-nilai Pancasila dalam praktik berbangsa dan bernegara, mematuhi norma hukum dan konstitusi UUD NRI Tahun 1945, serta merawat kebinekaan dalam bingkai NKRI.",
-        atpTp: [
-          "menganalisis penerapan nilai-nilai Pancasila dalam kehidupan bermasyarakat",
-          "mematuhi norma, aturan hukum, serta hak dan kewajiban warga negara",
-          "menerapkan sikap gotong royong dan menghargai keberagaman budaya"
-        ]
-      },
-      "Bahasa Indonesia": {
-        cp: "Peserta didik mampu mengevaluasi informasi, mengkreasi gagasan, serta menyajikan teks laporan, negosiasi, dan karya ilmiah secara logis, kritis, dan santun sesuai konteks komunikasi kerja dan akademik.",
-        atpTp: [
-          "menganalisis struktur dan kaidah kebahasaan teks laporan hasil observasi",
-          "menyusun teks prosedur dan surat menyurat resmi secara efektif",
-          "mempresentasikan gagasan dan hasil karya secara lisan dengan santun"
-        ]
-      },
-      "Matematika": {
-        cp: "Peserta didik mampu menggeneralisasi sifat-ifat bilangan berpangkat dan logaritma, menyelesaikan sistem persamaan linear, fungsi, barisan dan deret, serta menganalisis data statistika dan peluang untuk pemecahan masalah kejuruan.",
-        atpTp: [
-          "menyelesaikan masalah kontekstual menggunakan konsep bilangan berpangkat dan logaritma",
-          "memodelkan dan menyelesaikan sistem persamaan dan pertidaksamaan linear",
-          "menganalisis ukuran pemusatan dan penyebaran data statistika"
-        ]
-      },
-      "Bahasa Inggris": {
-        cp: "Peserta didik mampu berkomunikasi secara lisan dan tulis dalam berbagai teks transaksional, interpersonal, deskriptif, prosedur, dan eksposisi yang relevan dengan dunia kerja serta komunikasi global.",
-        atpTp: [
-          "memahami ide utama dan informasi rinci dari teks deskriptif dan prosedur",
-          "menggunakan ungkapan komunikasi transaksional secara lisan dan tulis",
-          "menyusun teks fungsional dan korespondensi dasar sesuai konteks keahlian"
-        ]
-      },
-      "Informatika": {
-        cp: "Peserta didik mampu menerapkan berpikir komputasional, mengelola jaringan komputer dan internet secara aman, menganalisis data, serta mengembangkan algoritma pemrograman dasar.",
-        atpTp: [
-          "menerapkan strategi berpikir komputasional untuk menyelesaikan persoalan logika",
-          "mengoperasikan perangkat lunak perkantoran dan pengelolaan data secara efisien",
-          "menerapkan prinsip keamanan digital dan etika bermedia di ruang siber"
-        ]
-      },
-      "Projek Ilmu Pengetahuan Alam dan Sosial": {
-        cp: "Peserta didik mampu menjelaskan fenomena ilmiah secara kontekstual, merancang penyelidikan ilmiah sederhana, serta mengaitkan interaksi aspek sosial, ekonomi, dan lingkungan pada bidang keahliannya.",
-        atpTp: [
-          "menjelaskan keterkaitan makhluk hidup dan lingkungannya secara ilmiah",
-          "merancang dan melaksanakan penyelidikan sederhana terkait zat, energi, dan perubahannya",
-          "menganalisis interaksi sosial dan dinamika ekonomi dalam konteks kejuruan"
-        ]
-      },
-      "Koding dan Kecerdasan Artifisial": {
-        cp: "Peserta didik mampu merancang algoritma pemrograman terstruktur, mengolah dataset sederhana, serta memanfaatkan model kecerdasan artifisial (AI) secara etis dan produktif.",
-        atpTp: [
-          "menyusun algoritma dan struktur kontrol pemrograman dasar secara logis",
-          "mengimplementasikan kode program sederhana untuk otomatisasi tugas",
-          "memanfaatkan perangkat kecerdasan artifisial (AI) secara bijak dan etis"
-        ]
-      },
-      "Dasar-Dasar Manajemen Perkantoran dan Layanan Bisnis": {
-        cp: "Peserta didik mampu memahami proses bisnis manajemen perkantoran dan layanan bisnis, menerapkan K3LH perkantoran, mengoperasikan peralatan serta aplikasi perkantoran, dan melaksanakan komunikasi bisnis dasar.",
-        atpTp: [
-          "memahami proses bisnis dan perkembangan teknologi di bidang manajemen perkantoran",
-          "menerapkan prosedur keselamatan dan kesehatan kerja (K3LH) perkantoran",
-          "mengoperasikan peralatan kantor dan aplikasi pengolah dokumen/data"
-        ]
-      },
-      "Konsentrasi Keahlian Manajemen Perkantoran (OTKP)": {
-        cp: "Peserta didik mampu mengelola administrasi umum, kearsipan digital, korespondensi, keuangan kantor, sarana prasarana, kepegawaian, serta layanan humas dan keprotokolan sesuai standar industri.",
-        atpTp: [
-          "mengelola sistem kearsipan dan korespondensi kantor berbasis digital",
-          "melaksanakan administrasi keuangan kantor, sarana prasarana, dan kepegawaian",
-          "menerapkan pelayanan prima, humas, dan keprotokolan secara profesional"
-        ]
-      },
-      "Dasar-Dasar Akuntansi dan Keuangan Lembaga": {
-        cp: "Peserta didik mampu memahami proses bisnis akuntansi, menerapkan prinsip keselamatan kerja, mencatat persamaan dasar akuntansi, serta mengoperasikan aplikasi pengolah angka (spreadsheet).",
-        atpTp: [
-          "memahami proses bisnis dan etika profesi di bidang akuntansi dan keuangan",
-          "mencatat transaksi ke dalam persamaan dasar akuntansi dan jurnal umum",
-          "mengoperasikan aplikasi pengolah angka (spreadsheet) untuk laporan keuangan"
-        ]
-      },
-      "Konsentrasi Keahlian Akuntansi (AKL)": {
-        cp: "Peserta didik mampu menyusun siklus akuntansi perusahaan jasa, dagang, dan manufaktur, mengelola akuntansi lembaga/pemerintah, perpajakan, serta mengoperasikan komputer akuntansi (MYOB).",
-        atpTp: [
-          "menyusun siklus akuntansi perusahaan jasa dan dagang secara akurat",
-          "mengoperasikan aplikasi komputer akuntansi (MYOB) untuk pencatatan transaksi",
-          "menerapkan pencatatan akuntansi lembaga/pemerintah sesuai standar akuntansi"
-        ]
-      },
-      "Dasar-Dasar Teknik Jaringan Komputer dan Telekomunikasi": {
-        cp: "Peserta didik mampu memahami proses bisnis bidang TJKT, menerapkan K3LH, memahami arsitektur perangkat keras komputer, serta melakukan instalasi dan konfigurasi dasar jaringan lokal.",
-        atpTp: [
-          "memahami proses bisnis dan perkembangan teknologi jaringan komputer dan telekomunikasi",
-          "menerapkan prosedur keselamatan kerja (K3LH) dalam perakitan dan instalasi jaringan",
-          "melakukan instalasi perangkat jaringan dasar dan pengkabelan terstruktur"
-        ]
-      },
-      "Konsentrasi Keahlian Teknik Komputer dan Jaringan (TKJ)": {
-        cp: "Peserta didik mampu merancang pengalamatan jaringan, mengonfigurasi routing dan firewall (MikroTik), mengelola administrasi sistem jaringan server, serta mengamankan infrastruktur jaringan.",
-        atpTp: [
-          "mengonfigurasi routing, manajemen bandwidth, dan firewall pada infrastruktur jaringan",
-          "menginstalasi dan mengelola layanan administrasi sistem jaringan berbasis server",
-          "melakukan pemeliharaan dan pemecahan masalah (troubleshooting) konektivitas jaringan"
-        ]
-      },
-      "Kreativitas, Inovasi, dan Kewirausahaan": {
-        cp: "Peserta didik mampu membaca peluang usaha berbasis kompetensi keahlian, menyusun proposal bisnis, merancang prototipe produk/jasa inovatif, serta melakukan pemasaran dan evaluasi usaha.",
-        atpTp: [
-          "menganalisis peluang usaha dan menyusun perencanaan bisnis berbasis keahlian",
-          "merancang dan memproduksi prototipe produk barang atau jasa yang inovatif",
-          "melaksanakan strategi pemasaran dan menyusun laporan keuangan usaha sederhana"
-        ]
-      }
-    };
-
-    function getReferensiMapel(mapel) {
-      if (BANK_CP_ATP_TP[mapel]) return BANK_CP_ATP_TP[mapel];
-      return {
-        cp: `Capaian Pembelajaran mata pelajaran ${mapel} sesuai keputusan Kepala BSKAP Kemendikdasmen (silakan klik tombol Buka Ruang GTK di kanan atas untuk melihat dokumen CP/ATP lengkap).`,
-        atpTp: [
-          `memahami konsep dasar dan prosedur kerja pada mata pelajaran ${mapel}`,
-          `menerapkan keterampilan praktik ${mapel} sesuai standar kompetensi`,
-          `mengevaluasi hasil kerja dan menyusun laporan kegiatan pada mata pelajaran ${mapel}`
-        ]
-      };
-    }
-
-    // Modal CP, ATP & TP
+    // Modal TP
     function openModalTP() {
-      const mapelAktif = selectedMapel || SEMUA_MAPEL[0];
-      const struktur = getStrukturKurikulumSmk(selectedKelas, "");
-      const fase = struktur.tingkat === "X" ? "Fase E (Kelas X)" : "Fase F (Kelas XI–XII)";
-      const ref = getReferensiMapel(mapelAktif);
-
-      document.getElementById('modal-tp-subtitle').textContent = `Mata Pelajaran: ${mapelAktif} (${selectedKelas})`;
-      document.getElementById('modal-cp-fase').textContent = fase;
-      document.getElementById('modal-cp-text').textContent = ref.cp;
-
-      const existingTexts = db.tpList
-        .filter(t => t.mapel === mapelAktif)
-        .map(t => t.teks.toLowerCase().trim());
-
-      const presetContainer = document.getElementById('preset-tp-container');
-      presetContainer.innerHTML = ref.atpTp.map((teks, idx) => {
-        const sudahAda = existingTexts.includes(teks.toLowerCase().trim());
-        return `
-          <div class="p-2 bg-white border border-slate-200 rounded-lg text-xs flex items-center justify-between gap-2">
-            <span class="text-slate-700 flex-1"><b>ATP-${idx + 1}:</b> ${teks}</span>
-            ${sudahAda
-              ? `<span class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-[11px] font-semibold shrink-0">✓ Sudah Dipilih</span>`
-              : `<button onclick="usePresetTP(${idx})" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-[11px] font-semibold shrink-0">+ Pilih TP</button>`
-            }
-          </div>
-        `;
-      }).join('');
-
-      const tpMapelIni = db.tpList.filter(t => t.mapel === mapelAktif);
       const list = document.getElementById('tp-list-container');
-      list.innerHTML = tpMapelIni.length === 0
-        ? `<div class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">Belum ada TP aktif untuk <b>${mapelAktif}</b>. Silakan klik <b>+ Pilih TP</b> pada daftar referensi di atas.</div>`
-        : tpMapelIni.map(tp => `
-            <div class="p-2.5 bg-slate-50 border rounded-lg text-xs flex justify-between items-center gap-2">
-              <span><b>${tp.id}:</b> ${tp.teks}</span>
-              <span class="text-[10px] text-slate-400 shrink-0">${tp.mapel}</span>
-            </div>
-          `).join('');
-
+      list.innerHTML = db.tpList.map(tp => `
+        <div class="p-2.5 bg-slate-50 border rounded-lg text-xs flex justify-between items-center">
+          <span><b>${tp.id}:</b> ${tp.teks}</span>
+        </div>
+      `).join('');
       document.getElementById('modal-tp').classList.remove('hidden');
-      lucide.createIcons();
     }
-
     function closeModalTP() { document.getElementById('modal-tp').classList.add('hidden'); }
-
-    async function simpanSatuTP(mapelAktif, teks) {
-      const nextId = "TP" + (db.tpList.length + 1);
-      db.tpList.push({ id: nextId, mapel: mapelAktif, teks });
-      if (GAS_WEB_APP_URL) {
-        await callGasPost({ action: "addTP", id_tp: nextId, mapel: mapelAktif, deskripsi_tp: teks });
-      }
-    }
-
-    async function usePresetTP(idx) {
-      const mapelAktif = selectedMapel || SEMUA_MAPEL[0];
-      const ref = getReferensiMapel(mapelAktif);
-      const teks = ref.atpTp[idx];
-      if (!teks) return;
-      await simpanSatuTP(mapelAktif, teks);
-      openModalTP();
-      if (currentTab === 'input-nilai') {
-        renderInputNilai(document.getElementById('main-content'));
-        lucide.createIcons();
-      }
-    }
-
-    async function addAllPresetTP() {
-      const mapelAktif = selectedMapel || SEMUA_MAPEL[0];
-      const ref = getReferensiMapel(mapelAktif);
-      const existingTexts = db.tpList
-        .filter(t => t.mapel === mapelAktif)
-        .map(t => t.teks.toLowerCase().trim());
-
-      for (const teks of ref.atpTp) {
-        if (!existingTexts.includes(teks.toLowerCase().trim())) {
-          await simpanSatuTP(mapelAktif, teks);
-        }
-      }
-      openModalTP();
-      if (currentTab === 'input-nilai') {
-        renderInputNilai(document.getElementById('main-content'));
-        lucide.createIcons();
-      }
-    }
-
     async function addTP() {
       const input = document.getElementById('new-tp-input');
-      const rawVal = input.value.trim();
-      if (!rawVal) return;
-
-      const mapelAktif = selectedMapel || SEMUA_MAPEL[0];
-      const lines = rawVal.split(/\r?\n/).map(l => l.replace(/^[-•*\d.)]+\s*/, '').trim()).filter(Boolean);
-      for (const teks of lines) {
-        await simpanSatuTP(mapelAktif, teks);
-      }
-
+      if (!input.value.trim()) return;
+      const nextId = "TP" + (db.tpList.length + 1);
+      const teks = input.value.trim();
+      db.tpList.push({ id: nextId, mapel: "Dasar-Dasar Kejuruan", teks });
       input.value = "";
       openModalTP();
+      if (GAS_WEB_APP_URL) {
+        await callGasPost({ action: "addTP", id_tp: nextId, mapel: "Dasar-Dasar Kejuruan", deskripsi_tp: teks });
+      }
       if (currentTab === 'input-nilai') {
         renderInputNilai(document.getElementById('main-content'));
         lucide.createIcons();
