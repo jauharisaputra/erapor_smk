@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,12 +14,21 @@
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Inter', sans-serif; }
-    
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+
     /* Pengaturan Khusus Cetak Rapor (A4) */
     @media print {
-      body * { visibility: hidden; }
-      #print-area, #print-area * { visibility: visible; }
+      body * {
+        visibility: hidden;
+      }
+
+      #print-area,
+      #print-area * {
+        visibility: visible;
+      }
+
       #print-area {
         position: absolute;
         left: 0;
@@ -31,15 +41,24 @@
         font-family: 'Times New Roman', Times, serif;
         font-size: 11pt;
       }
-      .no-print { display: none !important; }
-      @page { size: A4 portrait; margin: 1.5cm; }
+
+      .no-print {
+        display: none !important;
+      }
+
+      @page {
+        size: A4 portrait;
+        margin: 1.5cm;
+      }
     }
   </style>
 </head>
+
 <body class="bg-slate-100 text-slate-800 antialiased">
 
   <!-- ==================== HALAMAN LOGIN ==================== -->
-  <div id="login-screen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-blue-800 to-sky-700 p-4">
+  <div id="login-screen"
+    class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-blue-800 to-sky-700 p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
       <div class="bg-blue-950 p-6 text-center text-white border-b-4 border-amber-400">
         <div class="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -48,11 +67,13 @@
         <h1 class="text-xl font-bold tracking-wide">e-RAPOR SMK</h1>
         <p class="text-xs text-blue-200 mt-1">SMK Filadelfia Pemangkat<br>Kurikulum Merdeka</p>
       </div>
-      
+
       <form id="login-form" class="p-6 space-y-4">
         <div>
-          <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Pilih Peran (Mode Simulasi / Backend)</label>
-          <select id="login-role" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-600 focus:outline-none">
+          <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Pilih Peran (Mode Simulasi /
+            Backend)</label>
+          <select id="login-role"
+            class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-600 focus:outline-none">
             <option value="admin">Admin / Waka Kurikulum (Impor Siswa & Master)</option>
             <option value="guru">Guru Mata Pelajaran</option>
             <option value="walas">Wali Kelas</option>
@@ -61,12 +82,14 @@
 
         <div>
           <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Username / NIP</label>
-          <input type="text" id="login-user" value="199007012023011001" required class="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-600 focus:outline-none">
+          <input type="text" id="login-user" value="199007012023011001" required
+            class="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-600 focus:outline-none">
         </div>
 
         <div>
           <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Kata Sandi</label>
-          <input type="password" id="login-pass" value="smkbisa123" required class="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-600 focus:outline-none">
+          <input type="password" id="login-pass" value="smkbisa123" required
+            class="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-600 focus:outline-none">
         </div>
 
         <div>
@@ -77,7 +100,8 @@
           </select>
         </div>
 
-        <button type="submit" id="btn-login" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2.5 rounded-lg shadow transition flex items-center justify-center gap-2">
+        <button type="submit" id="btn-login"
+          class="w-full bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2.5 rounded-lg shadow transition flex items-center justify-center gap-2">
           <i data-lucide="log-in" class="w-4 h-4"></i> Masuk Aplikasi
         </button>
       </form>
@@ -89,7 +113,7 @@
 
   <!-- ==================== APLIKASI UTAMA (DASHBOARD) ==================== -->
   <div id="app-screen" class="hidden min-h-screen flex flex-col md:flex-row">
-    
+
     <!-- Sidebar -->
     <aside class="w-full md:w-64 bg-blue-950 text-white flex flex-col shrink-0 no-print">
       <div class="p-4 border-b border-blue-900 flex items-center gap-3">
@@ -112,7 +136,8 @@
       <nav id="sidebar-menu" class="flex-1 p-3 space-y-1 text-sm"></nav>
 
       <div class="p-3 border-t border-blue-900">
-        <button onclick="logout()" class="w-full flex items-center gap-2 px-3 py-2 text-red-300 hover:bg-red-950/60 hover:text-red-200 rounded-lg text-sm transition">
+        <button onclick="logout()"
+          class="w-full flex items-center gap-2 px-3 py-2 text-red-300 hover:bg-red-950/60 hover:text-red-200 rounded-lg text-sm transition">
           <i data-lucide="log-out" class="w-4 h-4"></i> Keluar
         </button>
       </div>
@@ -123,7 +148,8 @@
       <header class="bg-white shadow-sm px-6 py-3.5 flex items-center justify-between no-print">
         <h1 id="page-title" class="text-lg font-bold text-slate-800">Dashboard</h1>
         <div class="flex items-center gap-3">
-          <span id="sync-status" class="text-xs px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium flex items-center gap-1.5">
+          <span id="sync-status"
+            class="text-xs px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium flex items-center gap-1.5">
             <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Mode Lokal
           </span>
         </div>
@@ -138,12 +164,15 @@
     <div class="bg-white rounded-xl max-w-lg w-full p-6 shadow-xl">
       <div class="flex justify-between items-center border-b pb-3 mb-4">
         <h3 class="font-bold text-base">Daftar Tujuan Pembelajaran (TP)</h3>
-        <button onclick="closeModalTP()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+        <button onclick="closeModalTP()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x"
+            class="w-5 h-5"></i></button>
       </div>
       <div id="tp-list-container" class="space-y-2 max-h-60 overflow-y-auto mb-4"></div>
       <div class="flex gap-2">
-        <input type="text" id="new-tp-input" placeholder="Tulis deskripsi TP baru (diawali kata kerja)..." class="flex-1 px-3 py-2 border rounded-lg text-sm">
-        <button onclick="addTP()" class="bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-800">Tambah</button>
+        <input type="text" id="new-tp-input" placeholder="Tulis deskripsi TP baru (diawali kata kerja)..."
+          class="flex-1 px-3 py-2 border rounded-lg text-sm">
+        <button onclick="addTP()"
+          class="bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-800">Tambah</button>
       </div>
     </div>
   </div>
@@ -158,6 +187,7 @@
     let selectedKelas = 'ALL';
 
     const db = {
+      users: [],
       sekolah: {
         nama: "SMK FILADELFIA PEMANGKAT",
         npsn: "30106212",
@@ -174,7 +204,7 @@
         { id: "TP3", mapel: "Dasar-Dasar Kejuruan", teks: "mengoperasikan perangkat lunak dan peralatan praktik sesuai standar industri" }
       ],
       siswa: [
-        { 
+        {
           nis: "1267", nisn: "0097511564", nama: "APRIYANTO", kelas: "XII TKJ", jurusan: "Teknik Komputer dan Jaringan",
           nilaiMapel: {
             "Dasar-Dasar Kejuruan": { nilai: 88, tercapai: ["TP2", "TP3"], perluBimbingan: ["TP1"], deskripsi: "" },
@@ -267,6 +297,15 @@
         const res = await fetch(`${GAS_WEB_APP_URL}?action=getAll`);
         const json = await res.json();
         if (json.status === 'ok' && json.data) {
+          if (json.data.users && json.data.users.length > 0) {
+            db.users = json.data.users.map(u => ({
+              username: String(u.username || "").replace(/^'+/, "").trim(),
+              password: String(u.password || "").trim(),
+              nama: String(u.nama || "").trim(),
+              role: String(u.role || "").trim().toLowerCase(),
+              ampu: String(u.ampu || "").trim()
+            }));
+          }
           if (json.data.tpList && json.data.tpList.length > 0) {
             db.tpList = json.data.tpList.map(t => ({
               id: String(t.id_tp),
@@ -315,7 +354,7 @@
     }
 
     // ==================== AUTH & NAVIGASI ====================
-    document.getElementById('login-form').addEventListener('submit', async function(e) {
+    document.getElementById('login-form').addEventListener('submit', async function (e) {
       e.preventDefault();
       const role = document.getElementById('login-role').value;
       const semester = document.getElementById('login-semester').value;
@@ -388,6 +427,7 @@
         { id: 'input-nilai', label: 'Nilai Akademik & TP', icon: 'edit-3', roles: ['guru', 'admin'] },
         { id: 'walas-input', label: 'Absensi, Ekskul & PKL', icon: 'clipboard-check', roles: ['walas', 'admin'] },
         { id: 'cetak-rapor', label: 'Cetak Rapor & Leger', icon: 'printer', roles: ['walas', 'admin'] },
+        { id: 'akun-guru', label: 'Akun Guru & Wali Kelas', icon: 'users', roles: ['admin'] },
         { id: 'data-master', label: 'Impor Model 8335 & Server', icon: 'upload-cloud', roles: ['admin'] }
       ];
 
@@ -420,6 +460,7 @@
         'input-nilai': 'Input Nilai Akhir & Capaian Kompetensi',
         'walas-input': 'Input Data Wali Kelas (Absensi, Ekskul, PKL)',
         'cetak-rapor': 'Pratinjau & Cetak Rapor Kurikulum Merdeka',
+        'akun-guru': 'Daftar & Bagikan Akun Guru / Wali Kelas',
         'data-master': 'Impor Excel Model 8335 & Konfigurasi Google Sheets'
       };
       document.getElementById('page-title').textContent = titles[tabId] || 'Dashboard';
@@ -429,8 +470,9 @@
       if (tabId === 'input-nilai') renderInputNilai(content);
       if (tabId === 'walas-input') renderWalasInput(content);
       if (tabId === 'cetak-rapor') renderCetakRapor(content);
+      if (tabId === 'akun-guru') renderAkunGuru(content);
       if (tabId === 'data-master') renderDataMaster(content);
-      
+
       lucide.createIcons();
     }
 
@@ -500,7 +542,7 @@
           s.nilaiMapel[mapelAktif] = { nilai: 0, tercapai: [], perluBimbingan: [], deskripsi: "" };
         }
         const dataNilai = s.nilaiMapel[mapelAktif];
-        
+
         const tpCheckboxes = db.tpList.map(tp => {
           const isTercapai = dataNilai.tercapai.includes(tp.id);
           const isBimbingan = dataNilai.perluBimbingan.includes(tp.id);
@@ -811,7 +853,7 @@
 
       const kelasOptions = daftarKelas.map(k => `<option value="${k}" ${k === selectedKelas ? 'selected' : ''}>${k}</option>`).join('');
       const siswaOptions = siswaList.map(s => `<option value="${s.nis}">${s.nis} - ${s.nama}</option>`).join('');
-      
+
       container.innerHTML = `
         <div class="bg-white p-4 rounded-xl shadow-sm border mb-6 flex flex-wrap items-center justify-between gap-4 no-print">
           <div class="flex flex-wrap items-center gap-3">
@@ -982,6 +1024,150 @@
       `;
     }
 
+    // ==================== VIEW 4B: DAFTAR & BAGIKAN AKUN GURU ====================
+    let showPasswordsMap = {};
+    let filterRoleAkun = 'ALL';
+    let searchAkunQuery = '';
+
+    function formatPesanAkun(u) {
+      const appUrl = window.location.origin + window.location.pathname;
+      const roleText = u.role === 'walas' ? 'Wali Kelas' : (u.role === 'admin' ? 'Admin / Kurikulum' : 'Guru Mata Pelajaran');
+      return `Yth. Bapak/Ibu *${u.nama}*,\n\nBerikut adalah informasi akun login aplikasi *e-Rapor SMK Filadelfia Pemangkat*:\n\n• *Link Aplikasi:* ${appUrl}\n• *Peran:* ${roleText}\n• *Ampu:* ${u.ampu || '-'}\n• *Username:* ${u.username}\n• *Password:* ${u.password}\n\nSilakan login menggunakan data di atas. Terima kasih.`;
+    }
+
+    function copyPesanAkun(idx) {
+      const u = db.users[idx];
+      if (!u) return;
+      const teks = formatPesanAkun(u);
+      navigator.clipboard.writeText(teks).then(() => {
+        alert(`Info login untuk ${u.nama} berhasil disalin ke clipboard! Siap ditempel di WhatsApp.`);
+      }).catch(() => {
+        prompt("Salin teks login berikut:", teks);
+      });
+    }
+
+    function shareWhatsAppAkun(idx) {
+      const u = db.users[idx];
+      if (!u) return;
+      const teks = encodeURIComponent(formatPesanAkun(u));
+      window.open(`https://wa.me/?text=${teks}`, '_blank');
+    }
+
+    function copySemuaAkun() {
+      if (!db.users.length) return;
+      const appUrl = window.location.origin + window.location.pathname;
+      const header = `*DAFTAR AKUN e-RAPOR SMK FILADELFIA PEMANGKAT*\nLink: ${appUrl}\n----------------------------------------\n`;
+      const body = db.users.map((u, i) => `${i + 1}. *${u.nama}* (${u.role.toUpperCase()} - ${u.ampu || '-'})\n   User: \`${u.username}\` | Pass: \`${u.password}\``).join('\n\n');
+      navigator.clipboard.writeText(header + body).then(() => {
+        alert(`Seluruh ${db.users.length} akun berhasil disalin ke clipboard!`);
+      });
+    }
+
+    function togglePasswordRow(username) {
+      showPasswordsMap[username] = !showPasswordsMap[username];
+      renderAkunGuru(document.getElementById('main-content'));
+      lucide.createIcons();
+    }
+
+    function renderAkunGuru(container) {
+      const filtered = db.users.map((u, originalIdx) => ({ ...u, originalIdx })).filter(u => {
+        const matchRole = filterRoleAkun === 'ALL' || u.role === filterRoleAkun;
+        const q = searchAkunQuery.toLowerCase();
+        const matchQuery = !q || u.nama.toLowerCase().includes(q) || u.username.toLowerCase().includes(q) || (u.ampu || '').toLowerCase().includes(q);
+        return matchRole && matchQuery;
+      });
+
+      const rows = filtered.map((u, idx) => {
+        const isShown = !!showPasswordsMap[u.username];
+        const roleBadge = u.role === 'admin'
+          ? '<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-purple-100 text-purple-800">Admin</span>'
+          : (u.role === 'walas'
+            ? '<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-800">Wali Kelas</span>'
+            : '<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-100 text-blue-800">Guru Mapel</span>');
+
+        return `
+          <tr class="border-b hover:bg-slate-50">
+            <td class="p-3 text-center font-medium">${idx + 1}</td>
+            <td class="p-3 font-semibold text-slate-800">${u.nama}</td>
+            <td class="p-3">${roleBadge}</td>
+            <td class="p-3 text-xs text-slate-600">${u.ampu || '-'}</td>
+            <td class="p-3 font-mono text-xs text-blue-900 font-semibold">${u.username}</td>
+            <td class="p-3 font-mono text-xs">
+              <div class="flex items-center gap-2">
+                <span>${isShown ? u.password : '••••••••'}</span>
+                <button onclick="togglePasswordRow('${u.username}')" class="text-slate-400 hover:text-slate-700" title="Tampilkan/Sembunyikan">
+                  <i data-lucide="${isShown ? 'eye-off' : 'eye'}" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </td>
+            <td class="p-3">
+              <div class="flex items-center justify-center gap-1.5">
+                <button onclick="copyPesanAkun(${u.originalIdx})" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-medium flex items-center gap-1" title="Salin Pesan Login">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i> Salin
+                </button>
+                <button onclick="shareWhatsAppAkun(${u.originalIdx})" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-medium flex items-center gap-1" title="Bagikan via WhatsApp">
+                  <i data-lucide="share-2" class="w-3.5 h-3.5"></i> WA
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      container.innerHTML = `
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div class="p-4 bg-slate-50 border-b flex flex-wrap items-center justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-2.5">
+              <input type="text" value="${searchAkunQuery}" oninput="searchAkunQuery = this.value; renderAkunGuru(document.getElementById('main-content')); lucide.createIcons();"
+                placeholder="Cari nama, username, atau mapel/kelas..."
+                class="px-3 py-1.5 border rounded-lg text-xs bg-white w-60 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+              <select onchange="filterRoleAkun = this.value; renderAkunGuru(document.getElementById('main-content')); lucide.createIcons();"
+                class="px-3 py-1.5 border rounded-lg text-xs bg-white font-medium">
+                <option value="ALL" ${filterRoleAkun === 'ALL' ? 'selected' : ''}>Semua Peran (${db.users.length})</option>
+                <option value="guru" ${filterRoleAkun === 'guru' ? 'selected' : ''}>Guru Mata Pelajaran</option>
+                <option value="walas" ${filterRoleAkun === 'walas' ? 'selected' : ''}>Wali Kelas</option>
+                <option value="admin" ${filterRoleAkun === 'admin' ? 'selected' : ''}>Admin</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="syncFromGoogleSheets().then(() => { renderAkunGuru(document.getElementById('main-content')); lucide.createIcons(); })"
+                class="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Muat Ulang Tab Users
+              </button>
+              <button onclick="copySemuaAkun()"
+                class="px-3.5 py-1.5 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5">
+                <i data-lucide="clipboard-list" class="w-3.5 h-3.5"></i> Salin Semua Akun
+              </button>
+            </div>
+          </div>
+
+          ${db.users.length === 0 ? `
+            <div class="p-8 text-center text-xs text-slate-500 space-y-2">
+              <p class="font-semibold text-slate-700">Belum ada data akun yang dimuat dari tab <code>Users</code>.</p>
+              <p>Pastikan tab <code>Users</code> di Google Sheet sudah terisi dan <code>Code.gs</code> mengembalikan <code>users</code> pada <code>action=getAll</code>, lalu klik <b>Muat Ulang Tab Users</b>.</p>
+            </div>
+          ` : `
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm text-left">
+                <thead class="bg-blue-950 text-white text-xs uppercase">
+                  <tr>
+                    <th class="p-3 text-center w-12">No</th>
+                    <th class="p-3">Nama Guru / Wali Kelas</th>
+                    <th class="p-3">Role</th>
+                    <th class="p-3">Ampu (Mapel / Kelas)</th>
+                    <th class="p-3">Username</th>
+                    <th class="p-3">Password</th>
+                    <th class="p-3 text-center">Bagikan ke Guru</th>
+                  </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>
+          `}
+        </div>
+      `;
+    }
+
     // ==================== VIEW 5: IMPOR MODEL 8335 & SERVER ====================
     let parsedImportSiswa = [];
 
@@ -1082,20 +1268,20 @@
       if (!file) return;
 
       const reader = new FileReader();
-      reader.onload = function(e) {
+      reader.onload = function (e) {
         const data = new Uint8Array(e.target.result);
         const workbook = XLSX.read(data, { type: 'array' });
 
         const sheetMeta = {
-          'AP12':  { kelas: 'XII OTKP', jurusan: 'Otomatisasi dan Tata Kelola Perkantoran' },
-          'AKL12': { kelas: 'XII AKL',  jurusan: 'Akuntansi dan Keuangan Lembaga' },
-          'TKJ12': { kelas: 'XII TKJ',  jurusan: 'Teknik Komputer dan Jaringan' },
-          'AP11':  { kelas: 'XI OTKP',  jurusan: 'Otomatisasi dan Tata Kelola Perkantoran' },
-          'AKL11': { kelas: 'XI AKL',   jurusan: 'Akuntansi dan Keuangan Lembaga' },
-          'TKJ11': { kelas: 'XI TKJ',   jurusan: 'Teknik Komputer dan Jaringan' },
-          'AP10':  { kelas: 'X OTKP',   jurusan: 'Otomatisasi dan Tata Kelola Perkantoran' },
-          'AKL10': { kelas: 'X AKL',    jurusan: 'Akuntansi dan Keuangan Lembaga' },
-          'TKJ10': { kelas: 'X TKJ',    jurusan: 'Teknik Komputer dan Jaringan' }
+          'AP12': { kelas: 'XII OTKP', jurusan: 'Otomatisasi dan Tata Kelola Perkantoran' },
+          'AKL12': { kelas: 'XII AKL', jurusan: 'Akuntansi dan Keuangan Lembaga' },
+          'TKJ12': { kelas: 'XII TKJ', jurusan: 'Teknik Komputer dan Jaringan' },
+          'AP11': { kelas: 'XI OTKP', jurusan: 'Otomatisasi dan Tata Kelola Perkantoran' },
+          'AKL11': { kelas: 'XI AKL', jurusan: 'Akuntansi dan Keuangan Lembaga' },
+          'TKJ11': { kelas: 'XI TKJ', jurusan: 'Teknik Komputer dan Jaringan' },
+          'AP10': { kelas: 'X OTKP', jurusan: 'Otomatisasi dan Tata Kelola Perkantoran' },
+          'AKL10': { kelas: 'X AKL', jurusan: 'Akuntansi dan Keuangan Lembaga' },
+          'TKJ10': { kelas: 'X TKJ', jurusan: 'Teknik Komputer dan Jaringan' }
         };
 
         const hasil = [];
@@ -1190,4 +1376,5 @@
     lucide.createIcons();
   </script>
 </body>
+
 </html>
