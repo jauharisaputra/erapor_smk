@@ -705,128 +705,6 @@
     }
 
     // ==================== VIEW 2: INPUT NILAI & TP ====================
-    function hitungNilaiAkhirPusmendik(dataNilai) {
-      const fList = Array.isArray(dataNilai.formatif) ? dataNilai.formatif.map(Number).filter(n => !isNaN(n)) : [];
-      const sLingkup = Array.isArray(dataNilai.sumatifLingkup) ? dataNilai.sumatifLingkup.map(Number).filter(n => !isNaN(n)) : [];
-      const sAkhir = Number(dataNilai.sumatifAkhir);
-
-      const rataFormatif = fList.length ? (fList.reduce((a, b) => a + b, 0) / fList.length) : 0;
-      const rataSumatifLingkup = sLingkup.length ? (sLingkup.reduce((a, b) => a + b, 0) / sLingkup.length) : 0;
-      const punyaSumatifAkhir = !isNaN(sAkhir) && dataNilai.sumatifAkhir !== "" && dataNilai.sumatifAkhir !== null && dataNilai.sumatifAkhir !== undefined;
-
-      // Komponen nilai akhir rapor berbasis asesmen sumatif (lingkup materi + akhir semester)
-      const komponenSumatif = punyaSumatifAkhir
-        ? (rataSumatifLingkup > 0 ? (rataSumatifLingkup + sAkhir) / 2 : sAkhir)
-        : rataSumatifLingkup;
-
-      const nilaiAkhir = komponenSumatif > 0 ? Math.round(komponenSumatif) : (Number(dataNilai.nilai) || 0);
-      let predikat = "Perlu Pendampingan";
-      if (nilaiAkhir >= 90) predikat = "Sangat Baik (SB)";
-      else if (nilaiAkhir >= 80) predikat = "Baik (B)";
-      else if (nilaiAkhir >= 70) predikat = "Cukup (C)";
-
-      return {
-        rataFormatif: rataFormatif.toFixed(1),
-        rataSumatifLingkup: rataSumatifLingkup.toFixed(1),
-        nilaiAkhir,
-        predikat
-      };
-    }
-
-    function ensureKomponenNilai(dataNilai) {
-      if (!dataNilai.formatif) dataNilai.formatif = [dataNilai.nilai || 0, dataNilai.nilai || 0];
-      if (!dataNilai.sumatifLingkup) dataNilai.sumatifLingkup = [dataNilai.nilai || 0, dataNilai.nilai || 0];
-      if (dataNilai.sumatifAkhir === undefined) dataNilai.sumatifAkhir = dataNilai.nilai || 0;
-      return dataNilai;
-    }
-
-    function hitungNilaiAkhirPusmendik(dataNilai) {
-      const fList = Array.isArray(dataNilai.formatif) ? dataNilai.formatif.map(Number).filter(n => !isNaN(n)) : [];
-      const sLingkup = Array.isArray(dataNilai.sumatifLingkup) ? dataNilai.sumatifLingkup.map(Number).filter(n => !isNaN(n)) : [];
-      const sAkhir = Number(dataNilai.sumatifAkhir);
-
-      const rataFormatif = fList.length ? (fList.reduce((a, b) => a + b, 0) / fList.length) : 0;
-      const rataSumatifLingkup = sLingkup.length ? (sLingkup.reduce((a, b) => a + b, 0) / sLingkup.length) : 0;
-      const punyaSumatifAkhir = !isNaN(sAkhir) && dataNilai.sumatifAkhir !== "" && dataNilai.sumatifAkhir !== null && dataNilai.sumatifAkhir !== undefined;
-
-      const komponenSumatif = punyaSumatifAkhir
-        ? (rataSumatifLingkup > 0 ? (rataSumatifLingkup + sAkhir) / 2 : sAkhir)
-        : rataSumatifLingkup;
-
-      const nilaiAkhir = komponenSumatif > 0 ? Math.round(komponenSumatif) : (Number(dataNilai.nilai) || 0);
-      let predikat = "Perlu Pendampingan";
-      if (nilaiAkhir >= 90) predikat = "Sangat Baik (SB)";
-      else if (nilaiAkhir >= 80) predikat = "Baik (B)";
-      else if (nilaiAkhir >= 70) predikat = "Cukup (C)";
-
-      return {
-        rataFormatif: rataFormatif.toFixed(1),
-        rataSumatifLingkup: rataSumatifLingkup.toFixed(1),
-        nilaiAkhir,
-        predikat
-      };
-    }
-
-    function ensureKomponenNilai(dataNilai) {
-      if (!dataNilai.formatif) dataNilai.formatif = [dataNilai.nilai || 0, dataNilai.nilai || 0];
-      if (!dataNilai.sumatifLingkup) dataNilai.sumatifLingkup = [dataNilai.nilai || 0, dataNilai.nilai || 0];
-      if (dataNilai.sumatifAkhir === undefined) dataNilai.sumatifAkhir = dataNilai.nilai || 0;
-      if (dataNilai.kktp === undefined) dataNilai.kktp = 75;
-      return dataNilai;
-    }
-
-    function terapkanKetercapaianOtomatis(mapelAktif, dataNilai) {
-      const kktp = Number(dataNilai.kktp) || 75;
-      const na = Number(dataNilai.nilai) || 0;
-      const sLingkup = Array.isArray(dataNilai.sumatifLingkup) ? dataNilai.sumatifLingkup.map(Number) : [];
-
-      let tpAktif = db.tpList.filter(tp => tp.mapel === mapelAktif);
-      if (!tpAktif.length) {
-        const ref = getReferensiMapel(mapelAktif);
-        tpAktif = (ref.atpTp || []).map((teks, i) => ({
-          id: `AUTO_TP${i + 1}`,
-          mapel: mapelAktif,
-          teks
-        }));
-      }
-
-      const tercapai = [];
-      const perluBimbingan = [];
-
-      tpAktif.forEach((tp, idx) => {
-        // Jika tersedia skor Sumatif Lingkup Materi sesuai urutan TP, gunakan skor LM tersebut; jika tidak, pakai NA
-        const skorAcuan = (sLingkup.length > 0 && idx < sLingkup.length) ? sLingkup[idx] : na;
-        if (skorAcuan >= kktp) {
-          tercapai.push(tp.id);
-        } else {
-          perluBimbingan.push(tp.id);
-        }
-      });
-
-      dataNilai.tercapai = tercapai;
-      dataNilai.perluBimbingan = perluBimbingan;
-
-      const labelTercapai = tercapai.map(id => {
-        const item = tpAktif.find(t => t.id === id) || db.tpList.find(t => t.id === id);
-        return item ? item.teks : id;
-      });
-      const labelBimbingan = perluBimbingan.map(id => {
-        const item = tpAktif.find(t => t.id === id) || db.tpList.find(t => t.id === id);
-        return item ? item.teks : id;
-      });
-
-      let teks = "";
-      if (labelTercapai.length) {
-        teks += `Menunjukkan penguasaan yang baik dalam ${labelTercapai.join(", ")}.`;
-      }
-      if (labelBimbingan.length) {
-        teks += `${teks ? " " : ""}Perlu pendampingan lebih lanjut dalam ${labelBimbingan.join(", ")}.`;
-      }
-      dataNilai.deskripsi = teks || `Capaian kompetensi pada nilai akhir ${na} (KKTP ${kktp}).`;
-
-      return { tpAktif, tercapai, perluBimbingan, kktp };
-    }
-
     function renderInputNilai(container) {
       const daftarKelas = getDaftarKelas();
       if (selectedKelas === 'ALL' && daftarKelas.length > 0) selectedKelas = daftarKelas[0];
@@ -844,22 +722,27 @@
       let rows = siswaList.map((s, idx) => {
         ensureSiswaDefaults(s);
         if (!s.nilaiMapel[mapelAktif]) {
-          s.nilaiMapel[mapelAktif] = { nilai: 0, formatif: [0, 0], sumatifLingkup: [0, 0], sumatifAkhir: 0, kktp: 75, tercapai: [], perluBimbingan: [], deskripsi: "" };
+          s.nilaiMapel[mapelAktif] = { nilai: 0, tercapai: [], perluBimbingan: [], deskripsi: "" };
         }
-        const dataNilai = ensureKomponenNilai(s.nilaiMapel[mapelAktif]);
-        const kalkulasi = hitungNilaiAkhirPusmendik(dataNilai);
-        dataNilai.nilai = kalkulasi.nilaiAkhir;
-        const statusOtomatis = terapkanKetercapaianOtomatis(mapelAktif, dataNilai);
-
-        const tpRowsHtml = statusOtomatis.tpAktif.map(tp => {
-          const isTercapai = statusOtomatis.tercapai.includes(tp.id);
-          const badge = isTercapai
-            ? `<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold text-[10px] shrink-0">✓ Tercapai</span>`
-            : `<span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-semibold text-[10px] shrink-0">! Bimbingan</span>`;
+        const dataNilai = s.nilaiMapel[mapelAktif];
+        
+        const tpUntukMapel = db.tpList.filter(tp => tp.mapel === mapelAktif);
+        const tpCheckboxes = tpUntukMapel.length === 0
+          ? `<p class="text-[11px] text-slate-400 italic">Klik tombol <b>Kelola TP</b> di atas untuk memilih daftar TP ${mapelAktif}.</p>`
+          : tpUntukMapel.map(tp => {
+          const isTercapai = dataNilai.tercapai.includes(tp.id);
+          const isBimbingan = dataNilai.perluBimbingan.includes(tp.id);
           return `
-            <div class="flex items-start justify-between gap-2 text-xs py-1.5 border-b border-slate-100 last:border-0">
-              <span class="text-slate-700 flex-1"><b>${tp.id.replace(/^AUTO_/, '')}:</b> ${tp.teks}</span>
-              ${badge}
+            <div class="flex items-start justify-between gap-2 text-xs py-1 border-b border-slate-100 last:border-0">
+              <span class="text-slate-700 flex-1"><b>${tp.id}:</b> ${tp.teks}</span>
+              <div class="flex gap-2 shrink-0">
+                <label class="flex items-center gap-1 text-emerald-700 cursor-pointer">
+                  <input type="checkbox" ${isTercapai ? 'checked' : ''} onchange="toggleTP('${s.nis}', '${tp.id}', 'tercapai', this.checked)"> Tercapai
+                </label>
+                <label class="flex items-center gap-1 text-amber-700 cursor-pointer">
+                  <input type="checkbox" ${isBimbingan ? 'checked' : ''} onchange="toggleTP('${s.nis}', '${tp.id}', 'bimbingan', this.checked)"> Bimbingan
+                </label>
+              </div>
             </div>
           `;
         }).join('');
@@ -871,57 +754,17 @@
               <p class="font-bold text-slate-800">${s.nama}</p>
               <p class="text-xs text-slate-500">NIS: ${s.nis} | ${s.kelas}</p>
             </td>
-            <td class="p-3 min-w-[230px]">
-              <div class="grid grid-cols-2 gap-1.5 text-[11px] bg-slate-50 p-2 rounded border border-slate-200">
-                <div>
-                  <span class="text-slate-500 block">Formatif 1</span>
-                  <input type="number" min="0" max="100" value="${dataNilai.formatif[0] ?? 0}"
-                    onchange="updateKomponenAsesmen('${s.nis}', 'f0', this.value)"
-                    class="w-full px-1.5 py-1 border rounded text-center bg-white font-medium">
-                </div>
-                <div>
-                  <span class="text-slate-500 block">Formatif 2</span>
-                  <input type="number" min="0" max="100" value="${dataNilai.formatif[1] ?? 0}"
-                    onchange="updateKomponenAsesmen('${s.nis}', 'f1', this.value)"
-                    class="w-full px-1.5 py-1 border rounded text-center bg-white font-medium">
-                </div>
-                <div>
-                  <span class="text-blue-700 font-semibold block">Sumatif LM 1</span>
-                  <input type="number" min="0" max="100" value="${dataNilai.sumatifLingkup[0] ?? 0}"
-                    onchange="updateKomponenAsesmen('${s.nis}', 's0', this.value)"
-                    class="w-full px-1.5 py-1 border border-blue-200 rounded text-center bg-white font-semibold">
-                </div>
-                <div>
-                  <span class="text-blue-700 font-semibold block">Sumatif LM 2</span>
-                  <input type="number" min="0" max="100" value="${dataNilai.sumatifLingkup[1] ?? 0}"
-                    onchange="updateKomponenAsesmen('${s.nis}', 's1', this.value)"
-                    class="w-full px-1.5 py-1 border border-blue-200 rounded text-center bg-white font-semibold">
-                </div>
-                <div class="col-span-2 pt-1 border-t border-slate-200 flex items-center justify-between gap-2">
-                  <span class="text-indigo-700 font-semibold">Sumatif Akhir:</span>
-                  <input type="number" min="0" max="100" value="${dataNilai.sumatifAkhir ?? 0}"
-                    onchange="updateKomponenAsesmen('${s.nis}', 'sa', this.value)"
-                    class="w-20 px-1.5 py-1 border border-indigo-200 rounded text-center bg-white font-semibold">
-                </div>
-              </div>
-              <div class="mt-1.5 flex items-center justify-between text-[11px] px-1">
-                <span class="text-slate-500">Rata Formatif: <b>${kalkulasi.rataFormatif}</b></span>
-                <span class="font-bold text-blue-900 text-xs">NA: ${kalkulasi.nilaiAkhir} (${kalkulasi.predikat.split(' ')[0]})</span>
-              </div>
+            <td class="p-3 w-28">
+              <input type="number" min="0" max="100" value="${dataNilai.nilai}" 
+                onchange="updateNilaiAngka('${s.nis}', this.value)"
+                class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg text-center font-bold text-blue-900 focus:ring-2 focus:ring-blue-500">
             </td>
-            <td class="p-3 min-w-[270px]">
-              <div class="bg-slate-50 p-2 rounded border border-slate-200">
-                <div class="text-[10px] text-slate-500 mb-1 flex justify-between">
-                  <span>Otomatis (KKTP: <b>${statusOtomatis.kktp}</b>)</span>
-                  <span>NA: <b>${kalkulasi.nilaiAkhir}</b></span>
-                </div>
-                ${tpRowsHtml}
-              </div>
+            <td class="p-3 min-w-[280px]">
+              <div class="bg-slate-50 p-2 rounded border border-slate-200">${tpCheckboxes}</div>
             </td>
-            <td class="p-3 min-w-[250px]">
-              <div class="p-2.5 text-xs border border-slate-200 rounded-lg bg-slate-50 text-slate-700 leading-relaxed min-h-[78px]">
-                ${dataNilai.deskripsi}
-              </div>
+            <td class="p-3 min-w-[260px]">
+              <textarea rows="3" onchange="updateDeskripsiManual('${s.nis}', this.value)"
+                class="w-full p-2 text-xs border border-slate-300 rounded-lg bg-white text-slate-700">${dataNilai.deskripsi}</textarea>
             </td>
           </tr>
         `;
@@ -943,9 +786,6 @@
                   ${mapelOptions}
                 </select>
               </div>
-              <div class="text-[11px] text-slate-600 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-lg">
-                <b>Mode Otomatis Aktif:</b> Status <b>Tercapai / Bimbingan</b> dan <b>Deskripsi Capaian Kompetensi</b> terisi otomatis berdasarkan KKTP (75) dan nilai asesmen tanpa ceklis manual.
-              </div>
             </div>
             <div class="flex gap-2">
               <button onclick="openModalTP()" class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm">
@@ -963,9 +803,9 @@
                 <tr>
                   <th class="p-3 text-center w-12">No</th>
                   <th class="p-3">Nama Peserta Didik</th>
-                  <th class="p-3">Asesmen Formatif &amp; Sumatif (Otomatis NA)</th>
-                  <th class="p-3">Status Ketercapaian TP (Otomatis)</th>
-                  <th class="p-3">Deskripsi Capaian Kompetensi (Otomatis)</th>
+                  <th class="p-3 text-center">Nilai Akhir</th>
+                  <th class="p-3">Ceklis Ketercapaian TP</th>
+                  <th class="p-3">Deskripsi Capaian Kompetensi</th>
                 </tr>
               </thead>
               <tbody>${rows}</tbody>
@@ -973,24 +813,6 @@
           </div>
         </div>
       `;
-    }
-
-    function updateKomponenAsesmen(nis, key, val) {
-      const s = db.siswa.find(x => x.nis === nis);
-      if (!s) return;
-      const mapelAktif = selectedMapel || SEMUA_MAPEL[0];
-      const d = ensureKomponenNilai(s.nilaiMapel[mapelAktif] || { nilai: 0, tercapai: [], perluBimbingan: [], deskripsi: "" });
-      const num = Math.max(0, Math.min(100, Number(val) || 0));
-      if (key === 'f0') d.formatif[0] = num;
-      if (key === 'f1') d.formatif[1] = num;
-      if (key === 's0') d.sumatifLingkup[0] = num;
-      if (key === 's1') d.sumatifLingkup[1] = num;
-      if (key === 'sa') d.sumatifAkhir = num;
-      const kalk = hitungNilaiAkhirPusmendik(d);
-      d.nilai = kalk.nilaiAkhir;
-      s.nilaiMapel[mapelAktif] = d;
-      renderInputNilai(document.getElementById('main-content'));
-      lucide.createIcons();
     }
 
     function updateNilaiAngka(nis, val) {
