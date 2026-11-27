@@ -193,49 +193,69 @@
       ]
     };
 
+    // Struktur Kurikulum SMK sesuai Permendikdasmen No. 13 Tahun 2025 (Kelas X, XI, XII Program 3 Tahun)
+    const MAPEL_UMUM_BY_TINGKAT = {
+      X: [
+        "Pendidikan Agama dan Budi Pekerti",
+        "Pendidikan Pancasila",
+        "Bahasa Indonesia",
+        "Pendidikan Jasmani, Olahraga, dan Kesehatan",
+        "Sejarah",
+        "Seni dan Budaya"
+      ],
+      XI: [
+        "Pendidikan Agama dan Budi Pekerti",
+        "Pendidikan Pancasila",
+        "Bahasa Indonesia",
+        "Pendidikan Jasmani, Olahraga, dan Kesehatan",
+        "Sejarah"
+      ],
+      XII: [
+        "Pendidikan Agama dan Budi Pekerti",
+        "Pendidikan Pancasila",
+        "Bahasa Indonesia"
+      ]
+    };
+
     const MAPEL_UMUM = [
       "Pendidikan Agama dan Budi Pekerti",
       "Pendidikan Pancasila",
       "Bahasa Indonesia",
-      "Matematika",
-      "Bahasa Inggris",
-      "IPAS",
-      "IPA",
+      "Pendidikan Jasmani, Olahraga, dan Kesehatan",
       "Sejarah",
-      "PENJAS"
+      "Seni dan Budaya"
     ];
 
-    // Mapel kejuruan dipisahkan sesuai program keahlian / konsentrasi
-    const MAPEL_KEJURUAN_BY_PRODI = {
+    const NAMA_DASAR_PROGRAM = {
+      OTKP: "Dasar-Dasar Manajemen Perkantoran dan Layanan Bisnis",
+      AKL: "Dasar-Dasar Akuntansi dan Keuangan Lembaga",
+      TKJ: "Dasar-Dasar Teknik Jaringan Komputer dan Telekomunikasi"
+    };
+
+    const NAMA_KONSENTRASI = {
+      OTKP: "Konsentrasi Keahlian Manajemen Perkantoran (OTKP)",
+      AKL: "Konsentrasi Keahlian Akuntansi (AKL)",
+      TKJ: "Konsentrasi Keahlian Teknik Komputer dan Jaringan (TKJ)"
+    };
+
+    const MAPEL_PILIHAN_BY_PRODI = {
       OTKP: [
-        "Dasar-Dasar Kejuruan",
-        "DPK",
-        "PRODUKTIF",
-        "KWU",
-        "CODEING",
-        "Keu. Kantor",
-        "SARPRAS",
-        "KPEGAWAI",
-        "HUMAS"
+        "Koding dan Kecerdasan Artifisial",
+        "Keuangan Kantor",
+        "Sarana dan Prasarana",
+        "Kepegawaian",
+        "Humas dan Keprotokolan"
       ],
       AKL: [
-        "Dasar-Dasar Kejuruan",
-        "DPK",
-        "PRODUKTIF",
-        "KWU",
-        "MYOBE",
-        "AK.PEMRTH"
+        "Komputer Akuntansi (MYOB)",
+        "Akuntansi Pemerintah / Lembaga"
       ],
       TKJ: [
-        "Dasar-Dasar Kejuruan",
-        "DPK",
-        "PRODUKTIF",
-        "KWU",
-        "CODEING",
-        "SP. SHEET",
-        "A.I.J",
-        "A.S.J",
-        "P.P.J"
+        "Koding dan Kecerdasan Artifisial",
+        "Spreadsheet / Pengolah Angka",
+        "Administrasi Infrastruktur Jaringan",
+        "Administrasi Sistem Jaringan",
+        "Produk Kreatif & Pemrograman Jaringan"
       ]
     };
 
@@ -244,27 +264,77 @@
       if (text.includes("AKL") || text.includes("AKUNTANSI")) return "AKL";
       if (text.includes("TKJ") || text.includes("JARINGAN") || text.includes("KOMPUTER")) return "TKJ";
       if (text.includes("OTKP") || text.includes("MPLB") || text.includes("PERKANTORAN") || text.includes("MANAJEMEN PERKANTORAN")) return "OTKP";
-      return "ALL";
+      return "OTKP";
+    }
+
+    function detectTingkatKelas(kelas = "") {
+      const text = String(kelas).trim().toUpperCase();
+      if (text.startsWith("XII") || text.includes("12")) return "XII";
+      if (text.startsWith("XI") || text.includes("11")) return "XI";
+      return "X";
+    }
+
+    function getStrukturKurikulumSmk(kelas = "", jurusan = "") {
+      const tingkat = detectTingkatKelas(kelas);
+      const prodi = detectProdiCode(`${kelas} ${jurusan}`);
+      const umum = MAPEL_UMUM_BY_TINGKAT[tingkat] || MAPEL_UMUM_BY_TINGKAT.X;
+      let kejuruan = [];
+      let pilihan = [];
+      const muatanLokal = ["Muatan Lokal"];
+
+      if (tingkat === "X") {
+        kejuruan = [
+          "Matematika",
+          "Bahasa Inggris",
+          "Informatika",
+          "Projek Ilmu Pengetahuan Alam dan Sosial",
+          NAMA_DASAR_PROGRAM[prodi]
+        ];
+        pilihan = ["Koding dan Kecerdasan Artifisial"];
+      } else if (tingkat === "XI") {
+        kejuruan = [
+          "Matematika",
+          "Bahasa Inggris",
+          NAMA_KONSENTRASI[prodi],
+          "Kreativitas, Inovasi, dan Kewirausahaan"
+        ];
+        pilihan = MAPEL_PILIHAN_BY_PRODI[prodi] || ["Mata Pelajaran Pilihan"];
+      } else {
+        kejuruan = [
+          "Matematika",
+          "Bahasa Inggris",
+          NAMA_KONSENTRASI[prodi],
+          "Kreativitas, Inovasi, dan Kewirausahaan",
+          "Praktik Kerja Lapangan"
+        ];
+        pilihan = MAPEL_PILIHAN_BY_PRODI[prodi] || ["Mata Pelajaran Pilihan"];
+      }
+
+      return { tingkat, prodi, umum, kejuruan, pilihan, muatanLokal };
     }
 
     function getMapelKejuruanFor(kelasOrJurusan = "") {
-      const code = detectProdiCode(kelasOrJurusan);
-      if (code === "ALL") {
-        return Array.from(new Set([
-          ...MAPEL_KEJURUAN_BY_PRODI.OTKP,
-          ...MAPEL_KEJURUAN_BY_PRODI.AKL,
-          ...MAPEL_KEJURUAN_BY_PRODI.TKJ
-        ]));
-      }
-      return MAPEL_KEJURUAN_BY_PRODI[code] || MAPEL_KEJURUAN_BY_PRODI.OTKP;
+      const s = getStrukturKurikulumSmk(kelasOrJurusan, kelasOrJurusan);
+      return [...s.kejuruan, ...s.pilihan, ...s.muatanLokal];
     }
 
     function getMapelForContext(kelasOrJurusan = "") {
-      return [...MAPEL_UMUM, ...getMapelKejuruanFor(kelasOrJurusan)];
+      const s = getStrukturKurikulumSmk(kelasOrJurusan, kelasOrJurusan);
+      return [...s.umum, ...s.kejuruan, ...s.pilihan, ...s.muatanLokal];
     }
 
-    const SEMUA_MAPEL = getMapelForContext("ALL");
-    let selectedMapel = "Dasar-Dasar Kejuruan";
+    const SEMUA_MAPEL = Array.from(new Set([
+      ...getMapelForContext("X OTKP"),
+      ...getMapelForContext("XI OTKP"),
+      ...getMapelForContext("XII OTKP"),
+      ...getMapelForContext("X AKL"),
+      ...getMapelForContext("XI AKL"),
+      ...getMapelForContext("XII AKL"),
+      ...getMapelForContext("X TKJ"),
+      ...getMapelForContext("XI TKJ"),
+      ...getMapelForContext("XII TKJ")
+    ]));
+    let selectedMapel = "Matematika";
 
     // Helper normalisasi objek siswa saat impor baru
     function ensureSiswaDefaults(s) {
@@ -938,10 +1008,9 @@
       const s = db.siswa.find(x => x.nis === nis) || db.siswa[0];
       ensureSiswaDefaults(s);
 
-      const umumList = MAPEL_UMUM;
-      const kejuruanList = getMapelKejuruanFor(`${s.kelas || ""} ${s.jurusan || ""}`);
-
-      const fase = s.kelas.startsWith("X ") ? "E" : "F";
+      const struktur = getStrukturKurikulumSmk(s.kelas, s.jurusan);
+      const fase = struktur.tingkat === "X" ? "E" : "F";
+      const labelBidang = struktur.tingkat === "X" ? "Program Keahlian" : "Konsentrasi Keahlian";
 
       const renderRows = (list, startNo) => list.map((mapel, i) => {
         const data = s.nilaiMapel[mapel] || { nilai: "-", deskripsi: "-" };
@@ -971,7 +1040,7 @@
             <td class="py-0.5">Fase</td><td>:</td><td>${fase}</td>
           </tr>
           <tr>
-            <td class="py-0.5">Kompetensi Keahlian</td><td>:</td><td>${s.jurusan}</td>
+            <td class="py-0.5">${labelBidang}</td><td>:</td><td>${s.jurusan}</td>
             <td class="py-0.5">Semester</td><td>:</td><td>Ganjil</td>
           </tr>
           <tr>
@@ -985,16 +1054,18 @@
           <thead>
             <tr class="bg-gray-100">
               <th class="border border-black px-2 py-1.5 w-10">No</th>
-              <th class="border border-black px-2 py-1.5 w-56">Mata Pelajaran</th>
+              <th class="border border-black px-2 py-1.5 w-64">Mata Pelajaran</th>
               <th class="border border-black px-2 py-1.5 w-20">Nilai Akhir</th>
               <th class="border border-black px-2 py-1.5">Capaian Kompetensi</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td colspan="4" class="border border-black px-2 py-1 font-bold bg-gray-50">Kelompok Mata Pelajaran Umum</td></tr>
-            ${renderRows(umumList, 1)}
-            <tr><td colspan="4" class="border border-black px-2 py-1 font-bold bg-gray-50">Kelompok Mata Pelajaran Kejuruan</td></tr>
-            ${renderRows(kejuruanList, 1)}
+            <tr><td colspan="4" class="border border-black px-2 py-1 font-bold bg-gray-50">A. Kelompok Mata Pelajaran Umum</td></tr>
+            ${renderRows(struktur.umum, 1)}
+            <tr><td colspan="4" class="border border-black px-2 py-1 font-bold bg-gray-50">B. Kelompok Mata Pelajaran Kejuruan</td></tr>
+            ${renderRows(struktur.kejuruan, 1)}
+            <tr><td colspan="4" class="border border-black px-2 py-1 font-bold bg-gray-50">C. Mata Pelajaran Pilihan &amp; Muatan Lokal</td></tr>
+            ${renderRows([...struktur.pilihan, ...struktur.muatanLokal], 1)}
           </tbody>
         </table>
 
