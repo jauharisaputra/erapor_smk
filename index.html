@@ -206,6 +206,66 @@
     </div>
   </div>
 
+  <!-- ==================== MODAL EDIT AKUN GURU / WALI KELAS ==================== -->
+  <div id="modal-edit-user" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 no-print">
+    <div class="bg-white rounded-xl max-w-lg w-full p-6 shadow-xl">
+      <div class="flex justify-between items-center border-b pb-3 mb-4">
+        <div>
+          <h3 class="font-bold text-base text-slate-800">Edit Data Akun Guru / Wali Kelas</h3>
+          <p class="text-xs text-slate-500 mt-0.5">Perbarui nama, gelar, peran, ampu, username, atau password</p>
+        </div>
+        <button onclick="closeModalEditUser()" class="text-slate-400 hover:text-slate-600 p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form onsubmit="submitEditUser(event)" class="space-y-3">
+        <input type="hidden" id="edit-user-idx">
+        <input type="hidden" id="edit-user-old-username">
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Lengkap &amp; Gelar</label>
+          <input type="text" id="edit-user-nama" required class="w-full px-3 py-2 border rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Role / Peran</label>
+            <select id="edit-user-role" class="w-full px-3 py-2 border rounded-lg text-xs bg-white font-medium">
+              <option value="guru">guru (Guru Mata Pelajaran)</option>
+              <option value="walas">walas (Wali Kelas)</option>
+              <option value="admin">admin (Admin / Kurikulum)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Username / NIP</label>
+            <input type="text" id="edit-user-username" required class="w-full px-3 py-2 border rounded-lg text-xs bg-white font-mono">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Password</label>
+            <input type="text" id="edit-user-password" required class="w-full px-3 py-2 border rounded-lg text-xs bg-white font-mono">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Ampu (Mapel / Wali Kelas)</label>
+            <input type="text" id="edit-user-ampu" placeholder="cth: Wali Kelas XII TKJ | PKn" class="w-full px-3 py-2 border rounded-lg text-xs bg-white">
+          </div>
+        </div>
+
+        <div class="border-t pt-3 mt-4 flex justify-end gap-2">
+          <button type="button" onclick="closeModalEditUser()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold">
+            Batal
+          </button>
+          <button type="submit" class="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5">
+            <i data-lucide="save" class="w-3.5 h-3.5"></i> Simpan Perubahan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- ==================== JAVASCRIPT LOGIC ==================== -->
   <script>
     // URL Web App Google Apps Script (bisa diatur langsung di kode atau melalui menu Data Master)
@@ -437,6 +497,71 @@
       if (m && !m.deskripsi) m.deskripsi = generateDeskripsi(m.tercapai, m.perluBimbingan);
     });
 
+    const DELETED_USERS_STORAGE_KEY = 'erapor_deleted_users_v1';
+    const EDITED_USERS_STORAGE_KEY = 'erapor_edited_users_v1';
+
+    function getDeletedUsernamesLocal() {
+      try {
+        const raw = localStorage.getItem(DELETED_USERS_STORAGE_KEY);
+        const arr = raw ? JSON.parse(raw) : [];
+        return Array.isArray(arr) ? arr.map(String) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function addDeletedUsernameLocal(username) {
+      const clean = String(username || "").trim();
+      if (!clean) return;
+      const current = new Set(getDeletedUsernamesLocal().map(x => x.toLowerCase()));
+      current.add(clean.toLowerCase());
+      localStorage.setItem(DELETED_USERS_STORAGE_KEY, JSON.stringify(Array.from(current)));
+      const edited = getEditedUsersLocal();
+      if (edited[clean.toLowerCase()]) {
+        delete edited[clean.toLowerCase()];
+        localStorage.setItem(EDITED_USERS_STORAGE_KEY, JSON.stringify(edited));
+      }
+    }
+
+    function removeDeletedUsernameLocal(username) {
+      const clean = String(username || "").trim().toLowerCase();
+      const filtered = getDeletedUsernamesLocal().filter(x => x.toLowerCase() !== clean);
+      localStorage.setItem(DELETED_USERS_STORAGE_KEY, JSON.stringify(filtered));
+    }
+
+    function getEditedUsersLocal() {
+      try {
+        const raw = localStorage.getItem(EDITED_USERS_STORAGE_KEY);
+        const obj = raw ? JSON.parse(raw) : {};
+        return obj && typeof obj === 'object' ? obj : {};
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function saveEditedUserLocal(oldUsername, userObj) {
+      const edited = getEditedUsersLocal();
+      if (oldUsername && String(oldUsername).trim().toLowerCase() !== String(userObj.username).trim().toLowerCase()) {
+        delete edited[String(oldUsername).trim().toLowerCase()];
+      }
+      edited[String(userObj.username).trim().toLowerCase()] = { ...userObj };
+      localStorage.setItem(EDITED_USERS_STORAGE_KEY, JSON.stringify(edited));
+      removeDeletedUsernameLocal(userObj.username);
+    }
+
+    function applyLocalUserOverridesToDb() {
+      const deletedSet = new Set(getDeletedUsernamesLocal().map(x => x.toLowerCase()));
+      const editedMap = getEditedUsersLocal();
+      db.users = db.users
+        .map(u => {
+          const key = String(u.username || "").trim().toLowerCase();
+          return editedMap[key] ? { ...u, ...editedMap[key] } : u;
+        })
+        .filter(u => !deletedSet.has(String(u.username || "").trim().toLowerCase()));
+    }
+
+    applyLocalUserOverridesToDb();
+
     function setSyncBadge(state, text) {
       const el = document.getElementById('sync-status');
       if (!el) return;
@@ -474,13 +599,21 @@
         const json = await res.json();
         if (json.status === 'ok' && json.data) {
           if (json.data.users && json.data.users.length > 0) {
-            db.users = json.data.users.map(u => ({
-              username: String(u.username || "").replace(/^'+/, "").trim(),
-              password: String(u.password || "").trim(),
-              nama: String(u.nama || "").trim(),
-              role: String(u.role || "").trim().toLowerCase(),
-              ampu: String(u.ampu || "").trim()
-            }));
+            const deletedSet = new Set(getDeletedUsernamesLocal().map(x => x.toLowerCase()));
+            const editedMap = getEditedUsersLocal();
+            db.users = json.data.users
+              .map(u => {
+                const base = {
+                  username: String(u.username || "").replace(/^'+/, "").trim(),
+                  password: String(u.password || "").trim(),
+                  nama: String(u.nama || "").trim(),
+                  role: String(u.role || "").trim().toLowerCase(),
+                  ampu: String(u.ampu || "").trim()
+                };
+                const key = base.username.toLowerCase();
+                return editedMap[key] ? { ...base, ...editedMap[key] } : base;
+              })
+              .filter(u => u.username && !deletedSet.has(u.username.toLowerCase()));
           }
           if (json.data.tpList && json.data.tpList.length > 0) {
             db.tpList = json.data.tpList.map(t => ({
@@ -721,6 +854,29 @@
             ${rekapKelas || '<span class="text-xs text-slate-400">Belum ada data kelas.</span>'}
           </div>
         </div>
+
+        ${currentUser && currentUser.role === 'admin' ? `
+        <div class="bg-white rounded-xl shadow-sm p-5 border border-slate-200 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h3 class="font-bold text-sm text-slate-800 flex items-center gap-2">
+              <i data-lucide="users" class="w-4 h-4 text-blue-700"></i> Impor Cepat Database Guru &amp; Wali Kelas (2026/2027)
+            </h3>
+            <p class="text-xs text-slate-500 mt-1">Isi otomatis 24 akun guru &amp; wali kelas (termasuk Jauhari Saputra sebagai pengganti Pak Daniel) atau unggah file CSV/Excel tanpa input manual satu per satu.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <input type="file" id="dashboard-guru-file-input" accept=".csv,.xlsx,.xls" onchange="handleImportGuruFile(event)" class="hidden">
+            <button onclick="imporPresetDatabaseGuru()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm">
+              <i data-lucide="database-zap" class="w-4 h-4"></i> Impor Otomatis 24 Guru
+            </button>
+            <label for="dashboard-guru-file-input" class="cursor-pointer px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm">
+              <i data-lucide="upload" class="w-4 h-4"></i> Unggah CSV / Excel Guru
+            </label>
+            <button onclick="navigate('akun-guru')" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold">
+              Lihat Daftar Akun (${db.users.length})
+            </button>
+          </div>
+        </div>
+        ` : ''}
       `;
     }
 
@@ -1841,6 +1997,177 @@
     }
 
     // ==================== VIEW 4B: DAFTAR & BAGIKAN AKUN GURU ====================
+    const PRESET_DATABASE_GURU = [
+  {
+    "username": "jauhari.saputra",
+    "password": "smkbisa123",
+    "nama": "Jauhari Saputra, S.Kom.",
+    "role": "admin",
+    "ampu": "DPK, TKBL, TJKN, KJ (X TKJ, XI TKJ, XII TKJ) — Pengganti Pak Daniel"
+  },
+  {
+    "username": "mery.monalisa",
+    "password": "smkbisa123",
+    "nama": "Mery Monalisa",
+    "role": "walas",
+    "ampu": "Wali Kelas XII MPLB | IPAS, Keuangan Kantor, DPK"
+  },
+  {
+    "username": "rolin",
+    "password": "smkbisa123",
+    "nama": "Rolin",
+    "role": "guru",
+    "ampu": "Bahasa Indonesia (Kelas X, XI, XII)"
+  },
+  {
+    "username": "siswanto",
+    "password": "smkbisa123",
+    "nama": "Siswanto",
+    "role": "guru",
+    "ampu": "IPA (Kelas X) & Matematika (Kelas XI, XII)"
+  },
+  {
+    "username": "risma",
+    "password": "smkbisa123",
+    "nama": "Risma",
+    "role": "walas",
+    "ampu": "Wali Kelas XII AKL | DPK, Pajak, Ak. Keuangan, Praktik Akuntansi"
+  },
+  {
+    "username": "shi.chin",
+    "password": "smkbisa123",
+    "nama": "Shi Chin",
+    "role": "guru",
+    "ampu": "Myob & Ak. Pemerintah (Kelas XI, XII AKL)"
+  },
+  {
+    "username": "reweni",
+    "password": "smkbisa123",
+    "nama": "Reweni",
+    "role": "walas",
+    "ampu": "Wali Kelas XII TKJ | PKn (Kelas X, XI, XII)"
+  },
+  {
+    "username": "along",
+    "password": "smkbisa123",
+    "nama": "Along",
+    "role": "walas",
+    "ampu": "Wali Kelas XI AKL | Bahasa Inggris (Kelas XI, XII)"
+  },
+  {
+    "username": "novelia",
+    "password": "smkbisa123",
+    "nama": "Novelia",
+    "role": "guru",
+    "ampu": "Bahasa Mandarin (Kelas X, XI, XII)"
+  },
+  {
+    "username": "nursela",
+    "password": "smkbisa123",
+    "nama": "Nursela",
+    "role": "walas",
+    "ampu": "Wali Kelas XI MPLB | Sarpras & KWU"
+  },
+  {
+    "username": "yayan",
+    "password": "smkbisa123",
+    "nama": "Yayan",
+    "role": "guru",
+    "ampu": "DPK, Kepegawaian, Humas/MPLB"
+  },
+  {
+    "username": "teresya",
+    "password": "smkbisa123",
+    "nama": "Teresya",
+    "role": "guru",
+    "ampu": "DPK & Humas"
+  },
+  {
+    "username": "rasip",
+    "password": "smkbisa123",
+    "nama": "Rasip",
+    "role": "walas",
+    "ampu": "Wali Kelas X AKL | Matematika (Kelas X)"
+  },
+  {
+    "username": "suviria",
+    "password": "smkbisa123",
+    "nama": "Suviria",
+    "role": "guru",
+    "ampu": "Bahasa Inggris (Kelas X)"
+  },
+  {
+    "username": "sidiq",
+    "password": "smkbisa123",
+    "nama": "Sidiq",
+    "role": "guru",
+    "ampu": "ASJ (XII TKJ) & PPJ (XI TKJ)"
+  },
+  {
+    "username": "dharma",
+    "password": "smkbisa123",
+    "nama": "Dharma",
+    "role": "guru",
+    "ampu": "AIJ (XI, XII TKJ)"
+  },
+  {
+    "username": "liliana",
+    "password": "smkbisa123",
+    "nama": "Liliana",
+    "role": "guru",
+    "ampu": "Codeing (Kelas X) & KWU (XII TKJ)"
+  },
+  {
+    "username": "fajar",
+    "password": "smkbisa123",
+    "nama": "Fajar",
+    "role": "walas",
+    "ampu": "Wali Kelas XI TKJ | PJOK (Kelas X, XI, XII)"
+  },
+  {
+    "username": "suryanto",
+    "password": "smkbisa123",
+    "nama": "Suryanto",
+    "role": "guru",
+    "ampu": "Mapel Jam 3jp (Kelas XI, XII) & Seni (Kelas X)"
+  },
+  {
+    "username": "nina",
+    "password": "smkbisa123",
+    "nama": "Nina",
+    "role": "guru",
+    "ampu": "Sejarah (Kelas X)"
+  },
+  {
+    "username": "lena",
+    "password": "smkbisa123",
+    "nama": "Lena",
+    "role": "guru",
+    "ampu": "KWU (Kelas XI)"
+  },
+  {
+    "username": "romi",
+    "password": "smkbisa123",
+    "nama": "Romi",
+    "role": "guru",
+    "ampu": "Spread Sheet & DPK"
+  },
+  {
+    "username": "peter",
+    "password": "smkbisa123",
+    "nama": "Peter",
+    "role": "guru",
+    "ampu": "AGAMA & Tata Krama (Kelas X, XI, XII)"
+  },
+  {
+    "username": "keknya",
+    "password": "smkbisa123",
+    "nama": "Bpk Keknya",
+    "role": "walas",
+    "ampu": "Wali Kelas X TKJ (sesuai info chat walas)"
+  }
+];
+
     let showPasswordsMap = {};
     let filterRoleAkun = 'ALL';
     let searchAkunQuery = '';
@@ -1917,11 +2244,17 @@
               </div>
             </td>
             <td class="p-3">
-              <div class="flex items-center justify-center gap-1.5">
-                <button onclick="copyPesanAkun(${u.originalIdx})" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-medium flex items-center gap-1" title="Salin Pesan Login">
+              <div class="flex items-center justify-center gap-1 flex-wrap">
+                <button onclick="openModalEditUser(${u.originalIdx})" class="px-2 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-lg text-xs font-semibold flex items-center gap-1" title="Edit Nama, Gelar, Role, atau Ampu">
+                  <i data-lucide="pencil" class="w-3.5 h-3.5"></i> Edit
+                </button>
+                <button onclick="hapusAkunGuru(${u.originalIdx})" class="px-2 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-semibold flex items-center gap-1" title="Hapus Akun Guru Tidak Aktif">
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Hapus
+                </button>
+                <button onclick="copyPesanAkun(${u.originalIdx})" class="px-2 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-medium flex items-center gap-1" title="Salin Pesan Login">
                   <i data-lucide="copy" class="w-3.5 h-3.5"></i> Salin
                 </button>
-                <button onclick="shareWhatsAppAkun(${u.originalIdx})" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-medium flex items-center gap-1" title="Bagikan via WhatsApp">
+                <button onclick="shareWhatsAppAkun(${u.originalIdx})" class="px-2 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-medium flex items-center gap-1" title="Bagikan via WhatsApp">
                   <i data-lucide="share-2" class="w-3.5 h-3.5"></i> WA
                 </button>
               </div>
@@ -1945,7 +2278,16 @@
                 <option value="admin" ${filterRoleAkun === 'admin' ? 'selected' : ''}>Admin</option>
               </select>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <input type="file" id="import-guru-file-input" accept=".csv,.xlsx,.xls" onchange="handleImportGuruFile(event)" class="hidden">
+              <button onclick="imporPresetDatabaseGuru()"
+                class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm" title="Isi otomatis 24 data guru & wali kelas 2026/2027">
+                <i data-lucide="database-zap" class="w-3.5 h-3.5"></i> Impor Otomatis 24 Guru
+              </button>
+              <label for="import-guru-file-input"
+                class="cursor-pointer px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm" title="Unggah file CSV atau Excel database guru">
+                <i data-lucide="upload" class="w-3.5 h-3.5"></i> Impor CSV / Excel Guru
+              </label>
               <button onclick="syncFromGoogleSheets().then(() => { renderAkunGuru(document.getElementById('main-content')); lucide.createIcons(); })"
                 class="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5">
                 <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Muat Ulang Tab Users
@@ -2005,7 +2347,7 @@
                     <th class="p-3">Ampu (Mapel / Kelas)</th>
                     <th class="p-3">Username</th>
                     <th class="p-3">Password</th>
-                    <th class="p-3 text-center">Bagikan ke Guru</th>
+                    <th class="p-3 text-center">Aksi &amp; Bagikan</th>
                   </tr>
                 </thead>
                 <tbody>${rows}</tbody>
@@ -2058,6 +2400,226 @@
       renderAkunGuru(document.getElementById('main-content'));
       lucide.createIcons();
       alert("Akun ditambahkan di memori lokal (atur URL Apps Script untuk menyimpan ke Google Sheets).");
+    }
+
+    function openModalEditUser(idx) {
+      const u = db.users[idx];
+      if (!u) return;
+      document.getElementById('edit-user-idx').value = idx;
+      document.getElementById('edit-user-old-username').value = u.username;
+      document.getElementById('edit-user-nama').value = u.nama || "";
+      document.getElementById('edit-user-role').value = ["admin", "walas", "guru"].includes(u.role) ? u.role : "guru";
+      document.getElementById('edit-user-username').value = u.username || "";
+      document.getElementById('edit-user-password').value = u.password || "";
+      document.getElementById('edit-user-ampu').value = u.ampu || "";
+      document.getElementById('modal-edit-user').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeModalEditUser() {
+      document.getElementById('modal-edit-user').classList.add('hidden');
+    }
+
+    async function submitEditUser(event) {
+      event.preventDefault();
+      const idx = parseInt(document.getElementById('edit-user-idx').value, 10);
+      const oldUsername = document.getElementById('edit-user-old-username').value.trim();
+      const nama = document.getElementById('edit-user-nama').value.trim();
+      const role = document.getElementById('edit-user-role').value.trim().toLowerCase();
+      const username = document.getElementById('edit-user-username').value.trim();
+      const password = document.getElementById('edit-user-password').value.trim();
+      const ampu = document.getElementById('edit-user-ampu').value.trim();
+
+      if (!nama || !username || !password) {
+        alert("Nama, Username, dan Password wajib diisi.");
+        return;
+      }
+
+      // Cek duplikasi username jika diubah
+      const dupIdx = db.users.findIndex((u, i) => i !== idx && String(u.username).trim().toLowerCase() === username.toLowerCase());
+      if (dupIdx >= 0) {
+        alert(`Username "${username}" sudah digunakan oleh ${db.users[dupIdx].nama}. Gunakan username lain.`);
+        return;
+      }
+
+      const updatedObj = { username, password, nama, role, ampu };
+      if (idx >= 0 && idx < db.users.length) {
+        db.users[idx] = updatedObj;
+      }
+      saveEditedUserLocal(oldUsername, updatedObj);
+
+      if (GAS_WEB_APP_URL) {
+        setSyncBadge('loading', 'Memperbarui Akun di Sheets...');
+        try {
+          const res = await callGasPost({
+            action: "updateUser",
+            old_username: oldUsername,
+            ...updatedObj
+          });
+          if (res && res.status === "ok") {
+            setSyncBadge('online', 'Akun Diperbarui');
+          } else {
+            // Fallback ke addUser jika Code.gs belum memakai action updateUser
+            await callGasPost({ action: "addUser", ...updatedObj });
+            setSyncBadge('online', 'Akun Disimpan');
+          }
+        } catch (err) {
+          console.warn("updateUser sync fallback:", err);
+          setSyncBadge('local', 'Diperbarui di Lokal');
+        }
+      }
+
+      closeModalEditUser();
+      renderAkunGuru(document.getElementById('main-content'));
+      lucide.createIcons();
+      alert(`Data akun "${nama}" berhasil diperbarui!`);
+    }
+
+    async function hapusAkunGuru(idx) {
+      const u = db.users[idx];
+      if (!u) return;
+
+      if (currentUser && String(u.nama).trim() === String(currentUser.nama).trim() && db.users.filter(x => x.role === 'admin').length <= 1) {
+        alert("Tidak dapat menghapus satu-satunya akun Admin yang sedang aktif digunakan.");
+        return;
+      }
+
+      if (!confirm(`Hapus akun "${u.nama}" (username: ${u.username}) dari database e-Rapor?
+
+Gunakan opsi ini jika akun duplikat atau guru sudah tidak aktif.`)) {
+        return;
+      }
+
+      const deletedUser = db.users.splice(idx, 1)[0];
+      if (deletedUser && deletedUser.username) {
+        addDeletedUsernameLocal(deletedUser.username);
+      }
+
+      if (GAS_WEB_APP_URL && deletedUser) {
+        setSyncBadge('loading', 'Menghapus Akun dari Sheets...');
+        try {
+          const res = await callGasPost({
+            action: "deleteUser",
+            username: deletedUser.username
+          });
+          if (res && res.status === "ok") {
+            setSyncBadge('online', `${db.users.length} Akun Tersimpan`);
+          } else {
+            setSyncBadge('local', 'Dihapus di Lokal (Cek Code.gs)');
+          }
+        } catch (err) {
+          console.warn("deleteUser sync:", err);
+          setSyncBadge('local', 'Dihapus di Lokal');
+        }
+      }
+
+      renderAkunGuru(document.getElementById('main-content'));
+      lucide.createIcons();
+    }
+
+    async function prosesBatchImportGuru(daftarBaru, sumberLabel) {
+      if (!daftarBaru || !daftarBaru.length) {
+        alert("Tidak ada data guru valid untuk diimpor.");
+        return;
+      }
+
+      let ditambah = 0;
+      let diperbarui = 0;
+      const toSync = [];
+
+      daftarBaru.forEach(item => {
+        const username = String(item.username || "").trim();
+        const password = String(item.password || "smkbisa123").trim();
+        const nama = String(item.nama || "").trim();
+        const roleRaw = String(item.role || "guru").trim().toLowerCase();
+        const role = ["admin", "walas", "guru"].includes(roleRaw) ? roleRaw : "guru";
+        const ampu = String(item.ampu || "").trim();
+
+        if (!username || !nama) return;
+
+        const cleanObj = { username, password, nama, role, ampu };
+        const existingIdx = db.users.findIndex(u => String(u.username).trim().toLowerCase() === username.toLowerCase());
+        if (existingIdx >= 0) {
+          db.users[existingIdx] = cleanObj;
+          diperbarui++;
+        } else {
+          db.users.push(cleanObj);
+          ditambah++;
+        }
+        toSync.push(cleanObj);
+      });
+
+      if (GAS_WEB_APP_URL && toSync.length > 0) {
+        setSyncBadge('loading', `Menyimpan ${toSync.length} Akun Guru ke Sheets...`);
+        try {
+          // Coba bulk action terlebih dahulu, jika Code.gs belum mendukung importUsers maka fallback per-item addUser
+          const bulkRes = await callGasPost({ action: "importUsers", items: toSync });
+          if (bulkRes && bulkRes.status === "ok") {
+            setSyncBadge('online', `${db.users.length} Akun Tersimpan`);
+          } else {
+            for (const u of toSync) {
+              await callGasPost({ action: "addUser", ...u });
+            }
+            setSyncBadge('online', `${db.users.length} Akun Tersimpan`);
+          }
+        } catch (err) {
+          console.warn("Sync batch guru fallback:", err);
+          setSyncBadge('local', 'Tersimpan di Lokal');
+        }
+      }
+
+      if (currentTab === 'akun-guru') {
+        renderAkunGuru(document.getElementById('main-content'));
+      } else if (currentTab === 'dashboard') {
+        renderDashboard(document.getElementById('main-content'));
+      }
+      lucide.createIcons();
+
+      alert(`Impor ${sumberLabel} selesai!\n• Akun baru ditambahkan: ${ditambah}\n• Akun diperbarui: ${diperbarui}\n• Total akun aktif: ${db.users.length}`);
+    }
+
+    async function imporPresetDatabaseGuru() {
+      if (!confirm(`Impor otomatis ${PRESET_DATABASE_GURU.length} data guru & wali kelas (2026/2027) ke database e-Rapor?`)) return;
+      await prosesBatchImportGuru(PRESET_DATABASE_GURU, "Database 24 Guru 2026/2027");
+    }
+
+    function handleImportGuruFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
+
+          const parsed = rows.map(r => {
+            const norm = {};
+            Object.keys(r).forEach(k => { norm[k.trim().toLowerCase()] = r[k]; });
+            return {
+              username: String(norm.username || norm.user || norm.nip || "").trim(),
+              password: String(norm.password || norm.pass || "smkbisa123").trim(),
+              nama: String(norm.nama || norm['nama guru'] || "").trim(),
+              role: String(norm.role || norm.peran || "guru").trim().toLowerCase(),
+              ampu: String(norm.ampu || norm.tugas || norm.mapel || "").trim()
+            };
+          }).filter(x => x.username && x.nama);
+
+          if (!parsed.length) {
+            alert("Format file tidak sesuai. Pastikan terdapat kolom: username, password, nama, role, ampu.");
+            return;
+          }
+
+          await prosesBatchImportGuru(parsed, `File "${file.name}"`);
+        } catch (err) {
+          alert("Gagal membaca file guru: " + err.message);
+        } finally {
+          event.target.value = "";
+        }
+      };
+      reader.readAsArrayBuffer(file);
     }
 
     // ==================== VIEW 5: IMPOR MODEL 8335 & SERVER ====================
