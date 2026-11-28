@@ -306,7 +306,14 @@
         nipKepsek: "-",
         walas: "Jauhari Saputra, S.Kom.",
         nipWalas: "199007012023011001",
-        tanggalRapor: "19 Desember 2026"
+        tanggalRapor: "19 Desember 2026",
+        ttdKepsek: "",
+        stempelSekolah: "",
+        ttdWalas: "",
+        ttdWalasPerKelas: {},
+        walasNamaPerKelas: {},
+        walasNipPerKelas: {},
+        useDigitalSign: true
       },
       tpList: [
         { id: "TP1", mapel: "Dasar-Dasar Kejuruan", teks: "memahami proses bisnis di bidang keahlian secara menyeluruh" },
@@ -577,6 +584,104 @@
     }
 
     applyLocalUserOverridesToDb();
+
+    const SEKOLAH_TTD_STORAGE_KEY = 'erapor_sekolah_ttd_v1';
+
+    function loadSekolahTtdLocal() {
+      try {
+        const raw = localStorage.getItem(SEKOLAH_TTD_STORAGE_KEY);
+        if (!raw) return;
+        const saved = JSON.parse(raw);
+        if (saved && typeof saved === 'object') {
+          Object.assign(db.sekolah, saved);
+          if (!db.sekolah.ttdWalasPerKelas) db.sekolah.ttdWalasPerKelas = {};
+          if (!db.sekolah.walasNamaPerKelas) db.sekolah.walasNamaPerKelas = {};
+          if (!db.sekolah.walasNipPerKelas) db.sekolah.walasNipPerKelas = {};
+        }
+      } catch (e) {
+        console.warn("Gagal memuat konfigurasi TTD lokal:", e);
+      }
+    }
+
+    function saveSekolahTtdLocal() {
+      try {
+        localStorage.setItem(SEKOLAH_TTD_STORAGE_KEY, JSON.stringify({
+          kepsek: db.sekolah.kepsek,
+          nipKepsek: db.sekolah.nipKepsek,
+          walas: db.sekolah.walas,
+          nipWalas: db.sekolah.nipWalas,
+          tanggalRapor: db.sekolah.tanggalRapor,
+          ttdKepsek: db.sekolah.ttdKepsek || "",
+          stempelSekolah: db.sekolah.stempelSekolah || "",
+          ttdWalas: db.sekolah.ttdWalas || "",
+          ttdWalasPerKelas: db.sekolah.ttdWalasPerKelas || {},
+          walasNamaPerKelas: db.sekolah.walasNamaPerKelas || {},
+          walasNipPerKelas: db.sekolah.walasNipPerKelas || {},
+          useDigitalSign: db.sekolah.useDigitalSign !== false
+        }));
+      } catch (e) {
+        alert("Gagal menyimpan gambar TTD ke browser (ukuran gambar terlalu besar). Gunakan gambar PNG/JPG di bawah 500 KB.");
+      }
+    }
+
+    loadSekolahTtdLocal();
+
+    function getWalasInfoForKelas(kelas) {
+      const k = String(kelas || "").trim();
+      const kUpper = k.toUpperCase();
+      // Cek override khusus per kelas
+      let nama = (db.sekolah.walasNamaPerKelas && db.sekolah.walasNamaPerKelas[k]) || "";
+      let nip = (db.sekolah.walasNipPerKelas && db.sekolah.walasNipPerKelas[k]) || "";
+      let ttd = (db.sekolah.ttdWalasPerKelas && db.sekolah.ttdWalasPerKelas[k]) || "";
+
+      // Jika belum diset manual per kelas, coba cocokkan dari db.users berdasarkan ampu kelas
+      if (!nama && Array.isArray(db.users)) {
+        const altKelas = kUpper.replace("OTKP", "MPLB");
+        const matched = db.users.find(u => {
+          if (u.role !== 'walas') return false;
+          const ampuUp = String(u.ampu || "").toUpperCase();
+          return (kUpper && ampuUp.includes(kUpper)) || (altKelas && ampuUp.includes(altKelas));
+        });
+        if (matched) {
+          nama = matched.nama;
+          if (/^\d{8,}$/.test(String(matched.username || "").trim())) {
+            nip = String(matched.username).trim();
+          }
+        }
+      }
+
+      return {
+        nama: nama || db.sekolah.walas || "Wali Kelas",
+        nip: nip || db.sekolah.nipWalas || "-",
+        ttd: ttd || db.sekolah.ttdWalas || ""
+      };
+    }
+
+    function compressImageDataUrl(file, maxWidth, maxHeight, callback) {
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        const img = new Image();
+        img.onload = function() {
+          let w = img.width;
+          let h = img.height;
+          if (w > maxWidth || h > maxHeight) {
+            const ratio = Math.min(maxWidth / w, maxHeight / h);
+            w = Math.round(w * ratio);
+            h = Math.round(h * ratio);
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.clearRect(0, 0, w, h);
+          ctx.drawImage(img, 0, 0, w, h);
+          // Simpan sebagai PNG agar transparansi tanda tangan tetap terjaga
+          callback(canvas.toDataURL('image/png'));
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
 
     function setSyncBadge(state, text) {
       const el = document.getElementById('sync-status');
@@ -1894,64 +1999,218 @@
             ${s.catatanWalas}
           </div>
 
-          <div class="grid grid-cols-3 text-xs text-center mt-6">
-            <div>
-              <p>Mengetahui,</p>
-              <p>Orang Tua/Wali,</p>
-              <div class="h-16"></div>
-              <p class="font-bold underline">........................................</p>
-            </div>
-            <div>
-              <p>&nbsp;</p>
-              <p>Wali Kelas,</p>
-              <div class="h-16"></div>
-              <p class="font-bold underline">${db.sekolah.walas}</p>
-              <p>NIP. ${db.sekolah.nipWalas}</p>
-            </div>
-            <div>
-              <p>Pemangkat, ${db.sekolah.tanggalRapor}</p>
-              <p>Kepala Sekolah,</p>
-              <div class="h-16"></div>
-              <p class="font-bold underline">${db.sekolah.kepsek}</p>
-              <p>NIP. ${db.sekolah.nipKepsek}</p>
-            </div>
-          </div>
+          ${(() => {
+            const walasInfo = getWalasInfoForKelas(s.kelas);
+            const showDigital = db.sekolah.useDigitalSign !== false;
+            const imgWalas = (showDigital && walasInfo.ttd)
+              ? `<img src="${walasInfo.ttd}" alt="TTD Wali Kelas" style="height:58px;max-width:155px;object-fit:contain;margin:0 auto;display:block;mix-blend-mode:multiply;">`
+              : '';
+            const imgKepsek = (showDigital && db.sekolah.ttdKepsek)
+              ? `<img src="${db.sekolah.ttdKepsek}" alt="TTD Kepala Sekolah" style="height:58px;max-width:155px;object-fit:contain;margin:0 auto;display:block;position:relative;z-index:2;mix-blend-mode:multiply;">`
+              : '';
+            const imgStempel = (showDigital && db.sekolah.stempelSekolah)
+              ? `<img src="${db.sekolah.stempelSekolah}" alt="Stempel Sekolah" style="height:64px;max-width:90px;object-fit:contain;position:absolute;left:18%;top:-4px;opacity:0.85;z-index:1;pointer-events:none;mix-blend-mode:multiply;">`
+              : '';
+
+            return `
+              <div class="grid grid-cols-3 text-xs text-center mt-6">
+                <div>
+                  <p>Mengetahui,</p>
+                  <p>Orang Tua/Wali,</p>
+                  <div class="h-16"></div>
+                  <p class="font-bold underline">........................................</p>
+                </div>
+                <div>
+                  <p>&nbsp;</p>
+                  <p>Wali Kelas,</p>
+                  <div class="h-16 flex items-center justify-center relative">${imgWalas}</div>
+                  <p class="font-bold underline">${walasInfo.nama}</p>
+                  <p>NIP. ${walasInfo.nip}</p>
+                </div>
+                <div>
+                  <p>Pemangkat, ${db.sekolah.tanggalRapor}</p>
+                  <p>Kepala Sekolah,</p>
+                  <div class="h-16 flex items-center justify-center relative">${imgStempel}${imgKepsek}</div>
+                  <p class="font-bold underline">${db.sekolah.kepsek}</p>
+                  <p>NIP. ${db.sekolah.nipKepsek}</p>
+                </div>
+              </div>
+            `;
+          })()}
         </div>
       `;
+    }
+
+    let showTtdPanel = false;
+
+    function toggleTtdPanel() {
+      showTtdPanel = !showTtdPanel;
+      renderCetakRapor(document.getElementById('main-content'));
+      lucide.createIcons();
     }
 
     function renderCetakRapor(container) {
       const daftarKelas = getDaftarKelas();
       if (selectedKelas === 'ALL' && daftarKelas.length > 0) selectedKelas = daftarKelas[0];
       const siswaList = getFilteredSiswa();
+      const walasInfo = getWalasInfoForKelas(selectedKelas);
 
       const kelasOptions = daftarKelas.map(k => `<option value="${k}" ${k === selectedKelas ? 'selected' : ''}>${k}</option>`).join('');
       const siswaOptions = siswaList.map(s => `<option value="${s.nis}">${s.nis} - ${s.nama}</option>`).join('');
+      const hasKepsekTtd = !!db.sekolah.ttdKepsek;
+      const hasWalasTtd = !!walasInfo.ttd;
       
       container.innerHTML = `
-        <div class="bg-white p-4 rounded-xl shadow-sm border mb-6 flex flex-wrap items-center justify-between gap-4 no-print">
-          <div class="flex flex-wrap items-center gap-3">
-            <div>
-              <label class="text-xs font-bold uppercase text-slate-500 block">Kelas</label>
-              <select onchange="selectedKelas = this.value; navigate('cetak-rapor')" class="px-3 py-2 border rounded-lg text-sm font-medium bg-slate-50">
-                ${kelasOptions}
-              </select>
+        <div class="bg-white p-4 rounded-xl shadow-sm border mb-4 no-print">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="flex flex-wrap items-center gap-3">
+              <div>
+                <label class="text-xs font-bold uppercase text-slate-500 block">Kelas</label>
+                <select onchange="selectedKelas = this.value; navigate('cetak-rapor')" class="px-3 py-2 border rounded-lg text-sm font-medium bg-slate-50">
+                  ${kelasOptions}
+                </select>
+              </div>
+              <div>
+                <label class="text-xs font-bold uppercase text-slate-500 block">Peserta Didik (Pratinjau / Cetak Satuan)</label>
+                <select id="select-siswa-rapor" onchange="updatePreviewRapor(this.value)" class="px-3 py-2 border rounded-lg text-sm font-medium bg-slate-50">
+                  ${siswaOptions}
+                </select>
+              </div>
             </div>
-            <div>
-              <label class="text-xs font-bold uppercase text-slate-500 block">Peserta Didik (Pratinjau / Cetak Satuan)</label>
-              <select id="select-siswa-rapor" onchange="updatePreviewRapor(this.value)" class="px-3 py-2 border rounded-lg text-sm font-medium bg-slate-50">
-                ${siswaOptions}
-              </select>
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="toggleTtdPanel()" class="px-3.5 py-2.5 ${showTtdPanel ? 'bg-amber-600 text-white' : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300'} rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm">
+                <i data-lucide="pen-tool" class="w-4 h-4"></i> Tanda Tangan Digital (${hasKepsekTtd && hasWalasTtd ? 'Siap' : 'Atur'})
+              </button>
+              <button onclick="cetakRaporSatuan()" class="px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow">
+                <i data-lucide="printer" class="w-4 h-4"></i> Cetak Siswa Ini
+              </button>
+              <button onclick="cetakRaporSekelas()" class="px-4 py-2.5 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow">
+                <i data-lucide="layers" class="w-4 h-4"></i> Cetak Semua Kelas ${selectedKelas || ''} (${siswaList.length} Siswa)
+              </button>
             </div>
           </div>
-          <div class="flex flex-wrap items-center gap-2.5">
-            <button onclick="cetakRaporSatuan()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold flex items-center gap-2 shadow">
-              <i data-lucide="printer" class="w-4 h-4"></i> Cetak Siswa Ini
-            </button>
-            <button onclick="cetakRaporSekelas()" class="px-4 py-2.5 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-sm font-semibold flex items-center gap-2 shadow">
-              <i data-lucide="layers" class="w-4 h-4"></i> Cetak Semua Kelas ${selectedKelas || ''} (${siswaList.length} Siswa)
-            </button>
+
+          ${showTtdPanel ? `
+          <div class="mt-4 pt-4 border-t border-slate-200 bg-slate-50/70 rounded-xl p-4 space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h4 class="font-bold text-sm text-slate-800 flex items-center gap-1.5">
+                  <i data-lucide="stamp" class="w-4 h-4 text-blue-700"></i> Pengaturan Tanda Tangan Digital Massal (Otomatis untuk Seluruh Siswa Kelas ${selectedKelas || ''})
+                </h4>
+                <p class="text-xs text-slate-500">Unggah gambar tanda tangan (PNG/JPG transparan atau latar putih) atau gambar langsung di kanvas. Otomatis diterapkan ke seluruh rapor saat dicetak sekelas.</p>
+              </div>
+              <label class="inline-flex items-center gap-2 text-xs font-semibold text-slate-700 bg-white px-3 py-1.5 rounded-lg border cursor-pointer">
+                <input type="checkbox" ${db.sekolah.useDigitalSign !== false ? 'checked' : ''} onchange="toggleUseDigitalSign(this.checked)" class="rounded text-blue-600">
+                Tampilkan TTD Digital di Rapor
+              </label>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Kartu TTD Kepala Sekolah -->
+              <div class="bg-white p-3.5 rounded-lg border border-slate-200 space-y-2.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold uppercase text-blue-900">1. Kepala Sekolah &amp; Stempel</span>
+                  ${db.sekolah.ttdKepsek ? `<button onclick="hapusTtdKepsek()" class="text-[11px] text-rose-600 hover:underline font-semibold">Hapus TTD</button>` : ''}
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="block text-[10px] font-semibold text-slate-500">Nama Kepala Sekolah</label>
+                    <input type="text" value="${db.sekolah.kepsek}" onchange="updateIdentitasTtd('kepsek', this.value)" class="w-full px-2 py-1 border rounded text-xs">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-semibold text-slate-500">NIP Kepala Sekolah</label>
+                    <input type="text" value="${db.sekolah.nipKepsek}" onchange="updateIdentitasTtd('nipKepsek', this.value)" class="w-full px-2 py-1 border rounded text-xs">
+                  </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <div class="border border-dashed border-slate-300 rounded-lg p-2 text-center bg-slate-50">
+                    <div class="h-14 flex items-center justify-center mb-1">
+                      ${db.sekolah.ttdKepsek
+                        ? `<img src="${db.sekolah.ttdKepsek}" class="max-h-14 object-contain" alt="Preview TTD Kepsek">`
+                        : `<span class="text-[11px] text-slate-400">Belum ada TTD Kepsek</span>`}
+                    </div>
+                    <input type="file" id="upload-ttd-kepsek" accept="image/*" onchange="handleUploadTtd(event, 'kepsek')" class="hidden">
+                    <label for="upload-ttd-kepsek" class="cursor-pointer inline-block px-2.5 py-1 bg-blue-700 hover:bg-blue-800 text-white rounded text-[11px] font-semibold">
+                      Unggah TTD Kepsek
+                    </label>
+                  </div>
+                  <div class="border border-dashed border-slate-300 rounded-lg p-2 text-center bg-slate-50">
+                    <div class="h-14 flex items-center justify-center mb-1">
+                      ${db.sekolah.stempelSekolah
+                        ? `<img src="${db.sekolah.stempelSekolah}" class="max-h-14 object-contain" alt="Preview Stempel">`
+                        : `<span class="text-[11px] text-slate-400">Stempel (Opsional)</span>`}
+                    </div>
+                    <div class="flex items-center justify-center gap-1">
+                      <input type="file" id="upload-stempel-sekolah" accept="image/*" onchange="handleUploadTtd(event, 'stempel')" class="hidden">
+                      <label for="upload-stempel-sekolah" class="cursor-pointer inline-block px-2.5 py-1 bg-slate-700 hover:bg-slate-800 text-white rounded text-[11px] font-semibold">
+                        Unggah Stempel
+                      </label>
+                      ${db.sekolah.stempelSekolah ? `<button onclick="hapusStempelSekolah()" class="px-1.5 py-1 bg-rose-100 text-rose-700 rounded text-[10px] font-bold" title="Hapus Stempel">×</button>` : ''}
+                    </div>
+                  </div>
+                </div>
+                <div class="pt-1">
+                  <div class="flex items-center justify-between text-[10px] text-slate-500 mb-1">
+                    <span>Atau goreskan TTD Kepala Sekolah di sini:</span>
+                    <div class="space-x-2">
+                      <button type="button" onclick="clearSignPad('pad-kepsek')" class="text-slate-500 hover:underline">Bersihkan</button>
+                      <button type="button" onclick="saveSignPad('pad-kepsek', 'kepsek')" class="text-blue-700 font-bold hover:underline">Pakai Goresan Ini</button>
+                    </div>
+                  </div>
+                  <canvas id="pad-kepsek" width="320" height="72" class="w-full h-[72px] bg-white border border-slate-300 rounded cursor-crosshair touch-none"></canvas>
+                </div>
+              </div>
+
+              <!-- Kartu TTD Wali Kelas -->
+              <div class="bg-white p-3.5 rounded-lg border border-slate-200 space-y-2.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold uppercase text-emerald-900">2. Wali Kelas (${selectedKelas || 'Aktif'})</span>
+                  ${walasInfo.ttd ? `<button onclick="hapusTtdWalas('${selectedKelas}')" class="text-[11px] text-rose-600 hover:underline font-semibold">Hapus TTD</button>` : ''}
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="block text-[10px] font-semibold text-slate-500">Nama Wali Kelas (${selectedKelas})</label>
+                    <input type="text" value="${walasInfo.nama}" onchange="updateWalasKelasMeta('${selectedKelas}', 'nama', this.value)" class="w-full px-2 py-1 border rounded text-xs">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-semibold text-slate-500">NIP Wali Kelas</label>
+                    <input type="text" value="${walasInfo.nip}" onchange="updateWalasKelasMeta('${selectedKelas}', 'nip', this.value)" class="w-full px-2 py-1 border rounded text-xs">
+                  </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <div class="border border-dashed border-slate-300 rounded-lg p-2 text-center bg-slate-50">
+                    <div class="h-14 flex items-center justify-center mb-1">
+                      ${walasInfo.ttd
+                        ? `<img src="${walasInfo.ttd}" class="max-h-14 object-contain" alt="Preview TTD Walas">`
+                        : `<span class="text-[11px] text-slate-400">Belum ada TTD Walas</span>`}
+                    </div>
+                    <input type="file" id="upload-ttd-walas" accept="image/*" onchange="handleUploadTtd(event, 'walas')" class="hidden">
+                    <label for="upload-ttd-walas" class="cursor-pointer inline-block px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[11px] font-semibold">
+                      Unggah TTD Walas
+                    </label>
+                  </div>
+                  <div class="border border-slate-200 rounded-lg p-2 bg-slate-50 flex flex-col justify-between">
+                    <div>
+                      <label class="block text-[10px] font-semibold text-slate-500 mb-0.5">Tanggal Rapor</label>
+                      <input type="text" value="${db.sekolah.tanggalRapor}" onchange="updateIdentitasTtd('tanggalRapor', this.value)" class="w-full px-2 py-1 border rounded text-xs bg-white">
+                    </div>
+                    <p class="text-[10px] text-slate-500 mt-1">Tersimpan otomatis per kelas untuk cetak massal.</p>
+                  </div>
+                </div>
+                <div class="pt-1">
+                  <div class="flex items-center justify-between text-[10px] text-slate-500 mb-1">
+                    <span>Atau goreskan TTD Wali Kelas di sini:</span>
+                    <div class="space-x-2">
+                      <button type="button" onclick="clearSignPad('pad-walas')" class="text-slate-500 hover:underline">Bersihkan</button>
+                      <button type="button" onclick="saveSignPad('pad-walas', 'walas')" class="text-emerald-700 font-bold hover:underline">Pakai Goresan Ini</button>
+                    </div>
+                  </div>
+                  <canvas id="pad-walas" width="320" height="72" class="w-full h-[72px] bg-white border border-slate-300 rounded cursor-crosshair touch-none"></canvas>
+                </div>
+              </div>
+            </div>
           </div>
+          ` : ''}
         </div>
 
         <div id="print-status-banner" class="hidden max-w-4xl mx-auto mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-900 flex items-center justify-between no-print">
@@ -1963,7 +2222,156 @@
 
         <div id="print-area" class="space-y-8"></div>
       `;
+      if (showTtdPanel) {
+        initSignPad('pad-kepsek');
+        initSignPad('pad-walas');
+      }
       if (siswaList.length > 0) updatePreviewRapor(siswaList[0].nis);
+    }
+
+    function refreshCurrentRaporPreview() {
+      const sel = document.getElementById('select-siswa-rapor');
+      if (sel && sel.value) updatePreviewRapor(sel.value);
+    }
+
+    function toggleUseDigitalSign(checked) {
+      db.sekolah.useDigitalSign = !!checked;
+      saveSekolahTtdLocal();
+      refreshCurrentRaporPreview();
+    }
+
+    function updateIdentitasTtd(field, val) {
+      db.sekolah[field] = val.trim();
+      saveSekolahTtdLocal();
+      refreshCurrentRaporPreview();
+    }
+
+    function updateWalasKelasMeta(kelas, field, val) {
+      const k = String(kelas || "").trim();
+      if (!db.sekolah.walasNamaPerKelas) db.sekolah.walasNamaPerKelas = {};
+      if (!db.sekolah.walasNipPerKelas) db.sekolah.walasNipPerKelas = {};
+      if (field === 'nama') {
+        db.sekolah.walasNamaPerKelas[k] = val.trim();
+        db.sekolah.walas = val.trim();
+      } else if (field === 'nip') {
+        db.sekolah.walasNipPerKelas[k] = val.trim();
+        db.sekolah.nipWalas = val.trim();
+      }
+      saveSekolahTtdLocal();
+      refreshCurrentRaporPreview();
+    }
+
+    function handleUploadTtd(event, target) {
+      const file = event.target.files[0];
+      if (!file) return;
+      compressImageDataUrl(file, 360, 160, (dataUrl) => {
+        if (target === 'kepsek') {
+          db.sekolah.ttdKepsek = dataUrl;
+        } else if (target === 'stempel') {
+          db.sekolah.stempelSekolah = dataUrl;
+        } else if (target === 'walas') {
+          const k = String(selectedKelas || "").trim();
+          if (!db.sekolah.ttdWalasPerKelas) db.sekolah.ttdWalasPerKelas = {};
+          db.sekolah.ttdWalasPerKelas[k] = dataUrl;
+          db.sekolah.ttdWalas = dataUrl;
+        }
+        db.sekolah.useDigitalSign = true;
+        saveSekolahTtdLocal();
+        renderCetakRapor(document.getElementById('main-content'));
+        lucide.createIcons();
+      });
+    }
+
+    function hapusTtdKepsek() {
+      db.sekolah.ttdKepsek = "";
+      saveSekolahTtdLocal();
+      renderCetakRapor(document.getElementById('main-content'));
+      lucide.createIcons();
+    }
+
+    function hapusStempelSekolah() {
+      db.sekolah.stempelSekolah = "";
+      saveSekolahTtdLocal();
+      renderCetakRapor(document.getElementById('main-content'));
+      lucide.createIcons();
+    }
+
+    function hapusTtdWalas(kelas) {
+      const k = String(kelas || "").trim();
+      if (db.sekolah.ttdWalasPerKelas) delete db.sekolah.ttdWalasPerKelas[k];
+      db.sekolah.ttdWalas = "";
+      saveSekolahTtdLocal();
+      renderCetakRapor(document.getElementById('main-content'));
+      lucide.createIcons();
+    }
+
+    function initSignPad(canvasId) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      ctx.lineWidth = 2.2;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = '#0f172a';
+
+      let drawing = false;
+      const getPos = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+          x: (clientX - rect.left) * (canvas.width / rect.width),
+          y: (clientY - rect.top) * (canvas.height / rect.height)
+        };
+      };
+
+      const startDraw = (e) => {
+        drawing = true;
+        const pos = getPos(e);
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+        if (e.cancelable) e.preventDefault();
+      };
+      const moveDraw = (e) => {
+        if (!drawing) return;
+        const pos = getPos(e);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+        if (e.cancelable) e.preventDefault();
+      };
+      const endDraw = () => { drawing = false; };
+
+      canvas.addEventListener('mousedown', startDraw);
+      canvas.addEventListener('mousemove', moveDraw);
+      window.addEventListener('mouseup', endDraw);
+      canvas.addEventListener('touchstart', startDraw, { passive: false });
+      canvas.addEventListener('touchmove', moveDraw, { passive: false });
+      canvas.addEventListener('touchend', endDraw);
+    }
+
+    function clearSignPad(canvasId) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function saveSignPad(canvasId, target) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      const dataUrl = canvas.toDataURL('image/png');
+      if (target === 'kepsek') {
+        db.sekolah.ttdKepsek = dataUrl;
+      } else if (target === 'walas') {
+        const k = String(selectedKelas || "").trim();
+        if (!db.sekolah.ttdWalasPerKelas) db.sekolah.ttdWalasPerKelas = {};
+        db.sekolah.ttdWalasPerKelas[k] = dataUrl;
+        db.sekolah.ttdWalas = dataUrl;
+      }
+      db.sekolah.useDigitalSign = true;
+      saveSekolahTtdLocal();
+      renderCetakRapor(document.getElementById('main-content'));
+      lucide.createIcons();
     }
 
     function updatePreviewRapor(nis) {
