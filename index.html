@@ -15,7 +15,7 @@
   <style>
     body { font-family: 'Inter', sans-serif; }
     
-    /* Pengaturan Khusus Cetak Rapor (A4) */
+    /* Pengaturan Khusus Cetak Rapor & Ekspor PDF Akun (A4) */
     @media print {
       body { background: white !important; margin: 0 !important; padding: 0 !important; }
       #login-screen, aside, header, .no-print { display: none !important; }
@@ -25,6 +25,12 @@
         margin: 0 !important;
         overflow: visible !important;
         background: white !important;
+      }
+      body.printing-akun-pdf #main-content > :not(#akun-pdf-print-area) {
+        display: none !important;
+      }
+      body:not(.printing-akun-pdf) #akun-pdf-print-area {
+        display: none !important;
       }
       #print-area {
         width: 100% !important;
@@ -37,6 +43,16 @@
         color: black !important;
         font-family: 'Times New Roman', Times, serif !important;
         font-size: 11pt;
+      }
+      #akun-pdf-print-area {
+        display: block !important;
+        width: 100% !important;
+        max-width: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: white !important;
+        color: black !important;
+        font-family: 'Inter', Arial, sans-serif !important;
       }
       .rapor-sheet {
         box-shadow: none !important;
@@ -2206,6 +2222,64 @@
       });
     }
 
+    function eksporPdfSemuaAkun() {
+      if (!db.users.length) {
+        alert("Tidak ada data akun guru untuk diekspor.");
+        return;
+      }
+
+      const targetList = db.users;
+      const semesterLabel = currentUser?.semester || document.getElementById('badge-semester')?.textContent || '2026/2027 Ganjil';
+
+      const rowsHtml = targetList.map((u, idx) => {
+        const passDefault = String(u.password || '').trim() || 'smkbisa123';
+        return `
+          <tr>
+            <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">${idx + 1}</td>
+            <td style="border:1px solid #cbd5e1;padding:6px 10px;font-weight:600;">${u.nama}</td>
+            <td style="border:1px solid #cbd5e1;padding:6px 10px;font-family:monospace;font-weight:600;color:#1e3a8a;">${u.username}</td>
+            <td style="border:1px solid #cbd5e1;padding:6px 10px;font-family:monospace;">${passDefault}</td>
+          </tr>
+        `;
+      }).join('');
+
+      let printArea = document.getElementById('akun-pdf-print-area');
+      if (!printArea) {
+        printArea = document.createElement('div');
+        printArea.id = 'akun-pdf-print-area';
+        document.getElementById('main-content').appendChild(printArea);
+      }
+
+      printArea.innerHTML = `
+        <div style="padding:8px 4px;color:#0f172a;">
+          <div style="text-align:center;border-bottom:2px solid #0f172a;padding-bottom:8px;margin-bottom:12px;">
+            <h2 style="margin:0;font-size:15px;font-weight:700;text-transform:uppercase;">DAFTAR AKUN &amp; PASSWORD LOGIN GURU</h2>
+            <p style="margin:3px 0 0;font-size:11px;color:#334155;">${db.sekolah.nama} — Tahun Pelajaran ${semesterLabel}</p>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:11px;">
+            <thead>
+              <tr style="background:#0f172a;color:#ffffff;">
+                <th style="border:1px solid #0f172a;padding:7px 10px;width:44px;text-align:center;">No</th>
+                <th style="border:1px solid #0f172a;padding:7px 10px;text-align:left;">Nama Guru</th>
+                <th style="border:1px solid #0f172a;padding:7px 10px;text-align:left;width:190px;">Username Login</th>
+                <th style="border:1px solid #0f172a;padding:7px 10px;text-align:left;width:160px;">Password Default</th>
+              </tr>
+            </thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+        </div>
+      `;
+
+      document.body.classList.add('printing-akun-pdf');
+      const cleanupPrint = () => {
+        document.body.classList.remove('printing-akun-pdf');
+        window.removeEventListener('afterprint', cleanupPrint);
+      };
+      window.addEventListener('afterprint', cleanupPrint);
+      window.print();
+      setTimeout(cleanupPrint, 1000);
+    }
+
     function togglePasswordRow(username) {
       showPasswordsMap[username] = !showPasswordsMap[username];
       renderAkunGuru(document.getElementById('main-content'));
@@ -2296,6 +2370,10 @@
                 class="px-3.5 py-1.5 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5">
                 <i data-lucide="clipboard-list" class="w-3.5 h-3.5"></i> Salin Semua Akun
               </button>
+              <button onclick="eksporPdfSemuaAkun()"
+                class="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm" title="Ekspor / Cetak PDF Semua Akun Guru & Wali Kelas">
+                <i data-lucide="file-down" class="w-3.5 h-3.5"></i> Ekspor PDF Akun
+              </button>
             </div>
           </div>
 
@@ -2355,6 +2433,7 @@
             </div>
           `}
         </div>
+        <div id="akun-pdf-print-area" class="hidden"></div>
       `;
     }
 
